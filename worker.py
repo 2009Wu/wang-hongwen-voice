@@ -139,7 +139,10 @@ def speak(request, job):
         raise ValueError(f"Enter 1–{MAX_TEXT} characters and choose a supported language.")
     emit(.04, "Loading the speech voice (first use downloads models)…")
     manifest = json.loads((ROOT / "models.json").read_text(encoding="utf-8"))
-    model_path = snapshot_download(manifest["tts"]["repo"], revision=manifest["tts"]["revision"])
+    # Hub 0.36's first symlink-support probe is not thread-safe on Windows.
+    # Download serially so normal users use the supported file-copy fallback.
+    model_path = snapshot_download(manifest["tts"]["repo"], revision=manifest["tts"]["revision"],
+                                   max_workers=1 if os.name == "nt" else 8)
     dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
     model = Qwen3TTSModel.from_pretrained(model_path, device_map="cuda:0", dtype=dtype, attn_implementation="sdpa")
     reference = json.loads((ASSETS / "reference.json").read_text(encoding="utf-8"))

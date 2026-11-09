@@ -2,6 +2,21 @@
 
 [中文首页](README.md) · [English README](README.en.md) · [全部发布版本 / Releases](https://github.com/2009Wu/wang-hongwen-voice/releases)
 
+## [v0.2.2 — Windows 首次下载修复 / Windows first-download fix](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.2)
+
+### 中文
+
+- 修复普通 Windows 用户首次下载语音模型时可能出现的 `WinError 1314` 权限错误。
+- Windows 上改为串行下载语音模型文件，避免上游缓存首次探测的并发问题；不要求管理员权限或更改 Windows 安全设置。
+- 明确当前 Windows 启动器仍要求 16 GB 级显卡；8 GB 支持尚未验证。
+- 补充公开 ZIP 全新安装和首次模型下载的验证记录。
+
+验证：从公开 Hugging Face 下载入口取得 v0.2.1 ZIP，在空目录中自动安装独立运行环境，耗时约 364 秒。完整 222 秒歌曲的 WAV/MP3/MP4 转换通过。发现首次语音模型下载错误后应用本修复，移走失败缓存，重新从空语音模型目录下载并生成中文语音，WAV/MP3 解码通过。没有复用旧应用的 Python 或模型缓存。测试仍限于本机 Windows 11 / RTX 5070 Ti，不代表所有 Windows 配置或 8 GB 显卡均已验证。
+
+### English
+
+Fixed a first-use Windows speech-model download permission error by serializing snapshot downloads on Windows. No administrator rights or security-setting changes are required. A publicly downloaded v0.2.1 ZIP installed into an empty directory in about 364 seconds; its complete 222-second song conversion passed. After reproducing the speech download failure, this fix passed a fresh speech-model download and Chinese WAV/MP3 generation using that new private runtime. The launcher still requires a 16 GB-class NVIDIA GPU; 8 GB is unvalidated. See the Windows validation record for scope.
+
 ## [v0.2.1 — 中文新手说明包 / Chinese beginner documentation](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.1)
 
 ### 中文

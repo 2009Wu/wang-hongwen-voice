@@ -14,7 +14,7 @@
 
 启动器会自动准备独立 Python、GPU 运行库、音频工具和应用环境，无需手动配置 Python、Docker 或终端命令。以后再次双击启动器，点击 **Open Voice Studio**（打开工作室）即可。
 
-**电脑要求：64 位 Windows 10/11、8 GB 级或更大显存的 NVIDIA 显卡、可用的 NVIDIA 驱动、至少 30 GB 剩余空间。** 首次安装以及第一次生成需要联网下载数 GB 文件，请耐心等待。具体步骤和常见问题见[中文手册](docs/Windows-Setup.zh-CN.md)。
+**当前 Windows 版要求：64 位 Windows 10/11、16 GB 级或更大显存的 NVIDIA 显卡、可用的 NVIDIA 驱动、至少 30 GB 剩余空间。** 8 GB 显存支持尚待验证；目前启动器仍按 16 GB 级检测。 首次安装以及第一次生成需要联网下载数 GB 文件，请耐心等待。具体步骤和常见问题见[中文手册](docs/Windows-Setup.zh-CN.md)。
 
 当前应用和启动器的按钮仍以英文显示；中文手册提供了逐项对照。使用期间请保持启动器开启，并及时保存生成的文件。
 
@@ -52,7 +52,7 @@
 
 ## 当前版本与更新方法
 
-当前 Windows 发布版为 **[v0.2.1：中文新手说明包](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.1)**。下载包已包含中文快速开始、完整安装使用手册和更新日志；翻唱、语音模型与启动器功能沿用 v0.2.0。
+当前 Windows 发布版为 **[v0.2.2：Windows 首次下载修复](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.2)**。修复 Windows 首次下载语音模型时可能出现的权限错误，保留中文快速开始、完整安装使用手册和更新日志。
 
 程序目前不自动更新。安装新版本前，请先保存生成结果并关闭启动器，然后从 [Releases](https://github.com/2009Wu/wang-hongwen-voice/releases) 下载新 ZIP。完整的升级与模型缓存迁移步骤见[中文手册](docs/Windows-Setup.zh-CN.md#7-更新到新版本)，每个版本的变化见 [CHANGELOG.md](CHANGELOG.md)。
 
