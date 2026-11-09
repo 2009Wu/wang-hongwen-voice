@@ -152,17 +152,17 @@ internal sealed class Engine {
         } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
     }
     internal string HardwareCheck(bool disk) {
-        if (!Environment.Is64BitOperatingSystem || !Environment.Is64BitProcess) throw new InvalidOperationException("Use 64-bit Windows 10 or 11 for this release.");
+        if (!Environment.Is64BitOperatingSystem || !Environment.Is64BitProcess) throw new InvalidOperationException("请使用 64 位 Windows 10 或 11。");
         if (!File.Exists(Path.Combine(Root, "app.py")) || !File.Exists(Path.Combine(Root, "windows", "runtime-pins.json")))
-            throw new InvalidOperationException("Extract the complete ZIP first. Keep this launcher beside app.py and the windows folder.");
+            throw new InvalidOperationException("请先完整解压 ZIP，保持启动器与 app.py、windows 文件夹在同一目录。");
         var info = new ProcessStartInfo("nvidia-smi", "--query-gpu=index,name,memory.total,driver_version --format=csv,noheader,nounits") {
             UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true
         };
         string output;
         try { using (Process p = Process.Start(info)) {
             output = p.StandardOutput.ReadToEnd();
-            if (!p.WaitForExit(15000) || p.ExitCode != 0) throw new InvalidOperationException("NVIDIA GPU check failed. Install a current NVIDIA graphics driver and restart Windows.");
-        }} catch (System.ComponentModel.Win32Exception) { throw new InvalidOperationException("An NVIDIA GPU and its graphics driver are required. This release recommends 16 GB+ GPU memory."); }
+            if (!p.WaitForExit(15000) || p.ExitCode != 0) throw new InvalidOperationException("显卡检查失败，请更新 NVIDIA 驱动后重启电脑。");
+        }} catch (System.ComponentModel.Win32Exception) { throw new InvalidOperationException("需要 NVIDIA 显卡及可用驱动，最低为 6 GB 级显存。"); }
         int best = 0; string summary = "";
         foreach (string line in output.Split(new[] {'\r','\n'}, StringSplitOptions.RemoveEmptyEntries)) {
             string[] parts = line.Split(','); int index, memory;
@@ -170,10 +170,10 @@ internal sealed class Engine {
                 best = memory; gpuIndex = index; summary = parts[1].Trim() + " · " + (memory / 1024.0).ToString("0.0", CultureInfo.InvariantCulture) + " GB · driver " + parts[3].Trim();
             }
         }
-        if (best < 14500) throw new InvalidOperationException("This beginner release needs a 16 GB-class NVIDIA GPU. The detected GPU has less memory.");
+        if (best < 5500) throw new InvalidOperationException("需要 6 GB 级或以上 NVIDIA 显卡。检测到的显存不足。");
         if (disk) {
             var drive = new DriveInfo(Path.GetPathRoot(Root));
-            if (drive.AvailableFreeSpace < 30L * 1024 * 1024 * 1024) throw new InvalidOperationException("Free at least 30 GB on the drive containing this folder before setup.");
+            if (drive.AvailableFreeSpace < 30L * 1024 * 1024 * 1024) throw new InvalidOperationException("安装前请在程序所在磁盘预留至少 30 GB 可用空间。");
         }
         return summary;
     }
@@ -232,27 +232,46 @@ internal sealed class Engine {
     private void Pip(string python, string[] args, CancellationToken token) {
         Run(python, new[] {"-m", "pip", "install", "--no-input", "--progress-bar", "off", "--disable-pip-version-check", "--no-warn-script-location"}.Concat(args).ToArray(), token, 90);
     }
+    private void CleanupInstallCaches() {
+        foreach (string name in new[] {"pip-cache", "downloads"}) {
+            string target = Path.GetFullPath(Path.Combine(Runtime, name));
+            string boundary = Path.GetFullPath(Runtime).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!target.StartsWith(boundary, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Cache boundary rejected");
+            if (!Directory.Exists(target)) continue;
+            try {
+                CheckCacheTree(target);
+                Directory.Delete(target, true);
+                WriteLog("已清理安装缓存：" + name);
+            } catch (Exception error) { WriteLog("缓存暂未清理，可稍后重试：" + error.Message); }
+        }
+    }
+    private static void CheckCacheTree(string directory) {
+        if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked cache rejected");
+        foreach (string file in Directory.EnumerateFiles(directory))
+            if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked cache entry rejected");
+        foreach (string child in Directory.EnumerateDirectories(directory)) CheckCacheTree(child);
+    }
     internal void Setup(CancellationToken token) {
         Directory.CreateDirectory(Runtime);
         using (var setupLock = new FileStream(Path.Combine(Runtime, "setup.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)) {
-            Stage(2, "Checking your graphics card and free space…"); WriteLog(HardwareCheck(true));
+            Stage(2, "正在检查显卡和可用空间…"); WriteLog(HardwareCheck(true));
             string readyMarker = Path.Combine(Runtime, "ready.json");
             if (File.Exists(readyMarker)) File.Delete(readyMarker);
             var pins = json.Deserialize<Dictionary<string, object>>(File.ReadAllText(Path.Combine(Root, "windows", "runtime-pins.json")));
             if (!File.Exists(BasePython)) {
-                Stage(5, "Preparing a private Python runtime…");
+                Stage(5, "正在准备独立 Python 环境…");
                 string archive = Download((Dictionary<string, object>)pins["python"], token, 8);
                 Extract(archive, Path.Combine(Runtime, "python"), token);
             }
             if (Tool("ffmpeg") == null || Tool("ffprobe") == null) {
-                Stage(12, "Preparing the audio and video tools…");
+                Stage(12, "正在准备音视频工具…");
                 string archive = Download((Dictionary<string, object>)pins["ffmpeg"], token, 15);
                 Extract(archive, Path.Combine(Runtime, "ffmpeg"), token);
             }
-            Stage(20, "Installing the GPU runtime. This is a large download; please keep this window open.");
+            Stage(20, "正在安装 GPU 运行库，下载较大，请保持此窗口开启。");
             Pip(BasePython, new[] {"numpy==1.26.4"}, token);
             Pip(BasePython, new[] {"torch==2.7.1", "torchaudio==2.7.1", "--index-url", "https://download.pytorch.org/whl/cu128"}, token);
-            Stage(40, "Creating isolated app environments…");
+            Stage(40, "正在创建独立应用环境…");
             foreach (string env in new[] {"ui", "singing", "speech"}) {
                 string config = Path.Combine(Runtime, env, "pyvenv.cfg");
                 bool exists = File.Exists(Python(env));
@@ -261,18 +280,19 @@ internal sealed class Engine {
                 var args = new List<string> {"-m", "venv"}; if (exists) args.Add("--upgrade"); if (env != "ui") args.Add("--system-site-packages"); args.Add(Path.Combine(Runtime, env));
                 Run(BasePython, args.ToArray(), token, 10);
             }
-            Stage(48, "Installing the interface…"); Pip(Python("ui"), new[] {"-r", Path.Combine(Root, "requirements-ui.txt")}, token);
-            Stage(62, "Installing the singing tools…"); Pip(Python("singing"), new[] {"-r", Path.Combine(Root, "requirements-singing.txt")}, token);
-            Stage(78, "Installing the speech tools…"); Pip(Python("speech"), new[] {"-r", Path.Combine(Root, "requirements-tts.txt")}, token);
-            Stage(90, "Checking the GPU and installed components…");
+            Stage(48, "正在安装中文界面…"); Pip(Python("ui"), new[] {"-r", Path.Combine(Root, "requirements-ui.txt")}, token);
+            Stage(62, "正在安装翻唱工具…"); Pip(Python("singing"), new[] {"-r", Path.Combine(Root, "requirements-singing.txt")}, token);
+            Stage(78, "正在安装文字语音工具…"); Pip(Python("speech"), new[] {"-r", Path.Combine(Root, "requirements-tts.txt")}, token);
+            Stage(90, "正在验证 GPU 和已安装组件…");
             string doctor = Path.Combine(Root, "windows", "check_install.py");
             Run(BasePython, new[] {doctor, "gpu"}, token, 5);
             Run(BasePython, new[] {doctor, "tools"}, token, 2);
             Run(Python("ui"), new[] {doctor, "ui"}, token, 5);
             Run(Python("singing"), new[] {doctor, "singing"}, token, 5);
             Run(Python("speech"), new[] {doctor, "speech"}, token, 5);
-            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.2.0" }));
-            Stage(100, "Setup complete. You can open Voice Studio.");
+            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.0" }));
+            CleanupInstallCaches();
+            Stage(100, "安装完成，可以打开工作室。");
         }
     }
     private static int FindPort(int start) {
@@ -283,8 +303,8 @@ internal sealed class Engine {
         throw new InvalidOperationException("No free local app port was found. Close other copies of the app and try again.");
     }
     internal Process StartServer(int startPort, CancellationToken token) {
-        if (!IsReady()) throw new InvalidOperationException("Setup has not completed. Choose Set up Voice Studio or Repair setup first.");
-        Stage(100, "Checking the graphics card…"); WriteLog(HardwareCheck(false));
+        if (!IsReady()) throw new InvalidOperationException("安装尚未完成，请先点击「安装并打开工作室」或「修复安装」。");
+        Stage(100, "正在检查显卡…"); WriteLog(HardwareCheck(false));
         Run(BasePython, new[] {Path.Combine(Root, "windows", "check_install.py"), "gpu"}, token, 5);
         int port = FindPort(startPort);
         var info = ProcessInfo(Python("ui"), new[] {Path.Combine(Root, "app.py")});
@@ -295,18 +315,18 @@ internal sealed class Engine {
         server.OutputDataReceived += receive; server.ErrorDataReceived += receive;
         server.Start(); server.BeginOutputReadLine(); server.BeginErrorReadLine();
         AppUrl = "http://127.0.0.1:" + port;
-        Stage(100, "Opening the local interface…");
+        Stage(100, "正在打开本地界面…");
         using (var client = new HttpClient(new HttpClientHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(2) }) {
             var timer = Stopwatch.StartNew();
             try {
                 while (timer.Elapsed.TotalMinutes < 3) {
                     token.ThrowIfCancellationRequested();
-                    if (server.HasExited) throw new InvalidOperationException("The interface did not start. Open app.log for details or choose Repair setup.");
-                    try { if (client.GetAsync(AppUrl, token).GetAwaiter().GetResult().IsSuccessStatusCode) { Stage(100, "Voice Studio is ready. Keep this launcher open while using the app."); return server; } }
+                    if (server.HasExited) throw new InvalidOperationException("界面启动失败，请查看 app.log 或点击「修复安装」。");
+                    try { if (client.GetAsync(AppUrl, token).GetAwaiter().GetResult().IsSuccessStatusCode) { Stage(100, "工作室已就绪，使用期间请保持启动器开启。"); return server; } }
                     catch (HttpRequestException) { } catch (TaskCanceledException) { token.ThrowIfCancellationRequested(); }
                     Thread.Sleep(350);
                 }
-                throw new TimeoutException("The interface took too long to open. Check app.log and try Repair setup.");
+                throw new TimeoutException("界面启动超时，请查看 app.log 或尝试修复安装。");
             } catch { KillTree(server); server.Dispose(); throw; }
         }
     }
@@ -327,7 +347,20 @@ internal sealed class Engine {
             string[] actual = new JavaScriptSerializer().Deserialize<string[]>(output);
             if (p.ExitCode != 0 || !actual.SequenceEqual(samples)) return 4;
         }
-        Console.WriteLine("Windows argument round-trip and archive-boundary checks passed."); return 0;
+        // Real cache cleanup in an isolated fixture; model/runtime sentinels survive.
+        string fixture = Path.Combine(root, "work", "cache-test-" + Guid.NewGuid().ToString("N"));
+        var testEngine = new Engine(fixture, (n, message) => {}, message => {});
+        foreach (string dir in new[] {"pip-cache", "downloads", "python"}) {
+            string path = Path.Combine(testEngine.Runtime, dir);
+            Directory.CreateDirectory(path); File.WriteAllText(Path.Combine(path, "sentinel"), "keep");
+        }
+        Directory.CreateDirectory(Path.Combine(fixture, ".cache"));
+        File.WriteAllText(Path.Combine(fixture, ".cache", "model"), "keep");
+        testEngine.CleanupInstallCaches();
+        if (Directory.Exists(Path.Combine(testEngine.Runtime, "pip-cache")) || Directory.Exists(Path.Combine(testEngine.Runtime, "downloads"))) return 5;
+        if (!File.Exists(Path.Combine(testEngine.Runtime, "python", "sentinel")) || !File.Exists(Path.Combine(fixture, ".cache", "model"))) return 6;
+        Directory.Delete(fixture, true);
+        Console.WriteLine("Windows arguments, archive boundaries and selective cache cleanup passed."); return 0;
     }
 }
 
@@ -346,22 +379,22 @@ internal sealed class LauncherForm : Form {
     private Process server;
     private bool busy;
     internal LauncherForm(string root) {
-        Text = "Wang Hongwen Voice Studio"; Size = new Size(820, 630); MinimumSize = new Size(760, 580); StartPosition = FormStartPosition.CenterScreen;
+        Text = "王洪文语音工作室"; Size = new Size(820, 630); MinimumSize = new Size(760, 580); StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(248, 246, 242); Font = new Font("Segoe UI", 10); AutoScaleMode = AutoScaleMode.Dpi;
-        var title = new Label { Text = "Voice Studio", Font = new Font("Segoe UI", 26, FontStyle.Bold), ForeColor = Color.FromArgb(36, 43, 43), Location = new Point(30, 22), Size = new Size(700, 54) };
-        var subtitle = new Label { UseMnemonic = false, Text = "Wang Hongwen · AI singing covers & text to speech", Location = new Point(34, 80), Size = new Size(700, 27), ForeColor = Color.FromArgb(115, 62, 50) };
-        hardware.SetBounds(34, 121, 730, 42); hardware.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; hardware.ForeColor = Color.FromArgb(90, 100, 95); hardware.Text = "Windows 10/11 · NVIDIA GPU with 16 GB+ memory · 30 GB free space";
+        var title = new Label { Text = "王洪文语音工作室", Font = new Font("Segoe UI", 26, FontStyle.Bold), ForeColor = Color.FromArgb(36, 43, 43), Location = new Point(30, 22), Size = new Size(700, 54) };
+        var subtitle = new Label { UseMnemonic = false, Text = "AI 歌曲翻唱与文字语音 · 6 GB 起步，自动选择性能档位", Location = new Point(34, 80), Size = new Size(700, 27), ForeColor = Color.FromArgb(115, 62, 50) };
+        hardware.SetBounds(34, 121, 730, 42); hardware.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; hardware.ForeColor = Color.FromArgb(90, 100, 95); hardware.Text = "Windows 10/11 · NVIDIA 6 GB 显存起步 · 建议预留 30 GB 空间";
         status.SetBounds(34, 175, 730, 52); status.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; status.Font = new Font("Segoe UI", 12, FontStyle.Bold);
         progress.SetBounds(34, 233, 730, 15); progress.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        var hint = new Label { Text = "First setup downloads several GB. AI models download on first generation.\nEverything is kept in this app folder; your system Python is not changed.", Location = new Point(34, 263), Size = new Size(730, 52), ForeColor = Color.FromArgb(103, 112, 109), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        var hint = new Label { Text = "首次安装和首次生成需下载数 GB，之后使用缓存。\n环境保存在程序文件夹内，安装成功后自动清理安装下载缓存。", Location = new Point(34, 263), Size = new Size(730, 52), ForeColor = Color.FromArgb(103, 112, 109), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
         primary.SetBounds(34, 329, 300, 44); primary.UseMnemonic = false; primary.BackColor = Color.FromArgb(158, 57, 46); primary.ForeColor = Color.White; primary.FlatStyle = FlatStyle.Flat;
-        repair.SetBounds(350, 329, 180, 44); repair.Text = "Repair setup"; repair.FlatStyle = FlatStyle.Flat;
-        stop.SetBounds(546, 329, 150, 44); stop.Text = "Stop"; stop.FlatStyle = FlatStyle.Flat; stop.Enabled = false;
-        showDetail.SetBounds(34, 389, 300, 25); showDetail.Text = "Show setup details";
-        quickHelp.SetBounds(34, 428, 730, 100); quickHelp.Text = "When the browser opens, choose Sing a song or Text to speech.\nUpload your song or enter your text, then click Generate.\nSave the finished audio using the download buttons."; quickHelp.ForeColor = Color.FromArgb(103, 112, 109);
+        repair.SetBounds(350, 329, 180, 44); repair.Text = "修复安装"; repair.FlatStyle = FlatStyle.Flat;
+        stop.SetBounds(546, 329, 150, 44); stop.Text = "停止"; stop.FlatStyle = FlatStyle.Flat; stop.Enabled = false;
+        showDetail.SetBounds(34, 389, 300, 25); showDetail.Text = "显示安装详情";
+        quickHelp.SetBounds(34, 428, 730, 100); quickHelp.Text = "浏览器打开后，输入文字或放入音频/视频，点击「一键生成」。\n高级选项通常无需修改。生成后可下载 MP3 或无损 FLAC。\n所有输出均为 AI 合成，并非真实录音。"; quickHelp.ForeColor = Color.FromArgb(103, 112, 109);
         detail.SetBounds(34, 425, 730, 104); detail.Multiline = true; detail.ScrollBars = ScrollBars.Vertical; detail.ReadOnly = true; detail.BackColor = Color.White; detail.Font = new Font("Consolas", 8); detail.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right; detail.Visible = false;
         showDetail.CheckedChanged += (sender, e) => { detail.Visible = showDetail.Checked; quickHelp.Visible = !showDetail.Checked; };
-        var logs = new LinkLabel { Text = "Open setup log", Location = new Point(34, 545), Size = new Size(190, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
+        var logs = new LinkLabel { Text = "打开安装日志", Location = new Point(34, 545), Size = new Size(190, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
         logs.LinkClicked += (sender, e) => { if (File.Exists(engine.LogPath)) Process.Start(new ProcessStartInfo(engine.LogPath) { UseShellExecute = true }); };
         Controls.AddRange(new Control[] {title, subtitle, hardware, status, progress, hint, primary, repair, stop, showDetail, quickHelp, detail, logs});
         engine = new Engine(root, UpdateProgress, AppendLog);
@@ -370,7 +403,7 @@ internal sealed class LauncherForm : Form {
         repair.Click += async (sender, e) => await BeginWork(true);
         stop.Click += (sender, e) => { if (cancel != null) cancel.Cancel(); engine.CancelSetup(); Engine.KillTree(server); server = null; RefreshButtons(); };
         FormClosing += (sender, e) => {
-            if (busy && MessageBox.Show("Setup is still running. Stop it and close? You can resume setup later.", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) { e.Cancel = true; return; }
+            if (busy && MessageBox.Show("安装仍在进行，要停止并关闭吗？之后可以继续安装。", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) { e.Cancel = true; return; }
             if (cancel != null) cancel.Cancel(); engine.CancelSetup(); Engine.KillTree(server);
         };
         Shown += async (sender, e) => { try { string text = await Task.Run(() => engine.HardwareCheck(false)); hardware.Text = text; } catch (Exception error) { hardware.Text = error.Message; } };
@@ -378,9 +411,9 @@ internal sealed class LauncherForm : Form {
     private void RefreshButtons() {
         if (busy) { primary.Enabled = false; repair.Enabled = false; stop.Enabled = true; return; }
         bool running = server != null && !server.HasExited;
-        primary.Enabled = true; primary.Text = running ? "Open the app in my browser" : engine.IsReady() ? "Open Voice Studio" : "Set up & open Voice Studio";
+        primary.Enabled = true; primary.Text = running ? "在浏览器打开" : engine.IsReady() ? "打开工作室" : "安装并打开工作室";
         repair.Enabled = !running; stop.Enabled = running;
-        if (!running) status.Text = engine.IsReady() ? "Ready to open." : "Welcome. Set up the app once to get started.";
+        if (!running) status.Text = engine.IsReady() ? "已就绪，可以打开。" : "欢迎，首次使用请安装工作室。";
     }
     private void UpdateProgress(int value, string text) {
         if (IsDisposed || Disposing) return;
@@ -399,7 +432,7 @@ internal sealed class LauncherForm : Form {
         try {
             await Task.Run(() => { if (setup) engine.Setup(cancel.Token); server = engine.StartServer(7860, cancel.Token); });
             OpenApp();
-        } catch (OperationCanceledException) { errorMessage = "Stopped. You can resume by starting setup again."; }
+        } catch (OperationCanceledException) { errorMessage = "已停止，之后可以重新开始安装。"; }
         catch (Exception error) { errorMessage = error.Message; AppendLog(error.ToString()); }
         finally { busy = false; RefreshButtons(); if (errorMessage != null) { status.Text = errorMessage; showDetail.Checked = true; } }
     }

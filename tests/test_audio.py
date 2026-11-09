@@ -8,7 +8,7 @@ import numpy as np
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from audio_utils import decode_input, fade_weights, master, mix_tracks, probe, restore_dynamics, split_text, windows
+from audio_utils import decode_input, export_flac, fade_weights, master, mix_tracks, probe, restore_dynamics, split_text, windows
 
 
 class AudioTests(unittest.TestCase):
@@ -58,6 +58,11 @@ class AudioTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "limit"):
                 decode_input(root / "input.wav", root / "long.wav", 1, 10)
             master(root / "decoded.wav", root / "master.wav")
+            export_flac(root / "master.wav", root / "master.flac")
+            wav_pcm, wav_rate = sf.read(root / "master.wav", dtype="int32", always_2d=True)
+            flac_pcm, flac_rate = sf.read(root / "master.flac", dtype="int32", always_2d=True)
+            self.assertEqual(wav_rate, flac_rate)
+            np.testing.assert_array_equal(wav_pcm, flac_pcm)
             mastered, actual_rate = sf.read(root / "master.wav", always_2d=True)
             self.assertEqual(len(mastered), count)
             self.assertTrue(np.isfinite(mastered).all())

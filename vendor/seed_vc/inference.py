@@ -101,7 +101,7 @@ def load_models(args):
         bigvgan_model = bigvgan.BigVGAN.from_pretrained(bigvgan_name, revision='95a9d1dcb12906c03edd938d77b9333d6ded7dfb', use_cuda_kernel=False)
         # remove weight norm in the model and set to eval mode
         bigvgan_model.remove_weight_norm()
-        bigvgan_model = bigvgan_model.eval().to(device)
+        bigvgan_model = bigvgan_model.eval().to("cpu" if getattr(args, "low_vram", False) else device)
         vocoder_fn = bigvgan_model
     elif vocoder_type == 'hifigan':
         from modules.hifigan.generator import HiFTGenerator
@@ -368,6 +368,8 @@ def main(args):
         chunk_cond = cond[:, processed_frames:processed_frames + max_source_window]
         is_last_chunk = processed_frames + max_source_window >= cond.size(1)
         cat_condition = torch.cat([prompt_condition, chunk_cond], dim=1)
+        if getattr(args, "low_vram", False):
+            model.cfm.to(device)
         with torch.autocast(device_type=device.type, dtype=torch.float16 if fp16 else torch.float32):
             # Voice Conversion
             vc_target = model.cfm.inference(cat_condition,
@@ -375,7 +377,15 @@ def main(args):
                                                        mel2, style2, None, diffusion_steps,
                                                        inference_cfg_rate=inference_cfg_rate)
             vc_target = vc_target[:, :, mel2.size(-1):]
+        if getattr(args, "low_vram", False):
+            # Sequential GPU residency: same arithmetic, precision and chunks.
+            model.cfm.to("cpu")
+            torch.cuda.empty_cache()
+            vocoder_fn.to(device)
         vc_wave = vocoder_fn(vc_target.float()).squeeze()
+        if getattr(args, "low_vram", False):
+            vocoder_fn.to("cpu")
+            torch.cuda.empty_cache()
         vc_wave = vc_wave[None, :]
         if processed_frames == 0:
             if is_last_chunk:

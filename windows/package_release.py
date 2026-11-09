@@ -18,7 +18,7 @@ ROOT_FILES = {
     'Start Voice Studio.exe', 'THIRD_PARTY_NOTICES.md', 'VALIDATION.md',
     'app.py', 'audio_utils.py', 'models.json', 'requirements-singing.txt',
     'requirements-tts.txt', 'requirements-ui.txt', 'runner.py', 'settings.py',
-    'worker.py', '开始使用.txt',
+    'worker.py', 'performance.py', '开始使用.txt',
 }
 DIRECTORIES = ('assets', 'docs', 'tests', 'vendor', 'windows')
 EXCLUDED = {'.git', '.runtime', '.cache', '__pycache__', '.pytest_cache',
@@ -64,15 +64,15 @@ def build(root: Path, output_dir: Path) -> dict:
         raise ValueError('Quickstart must put Chinese first')
     output_dir.mkdir(parents=True, exist_ok=True)
     archive = output_dir / 'Wang-Hongwen-Voice-Studio-Windows.zip'
-    # Fixed headers and uncompressed entries make ZIP bytes reproducible across
-    # operating systems and zlib versions. The package excludes all model weights.
-    with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_STORED) as result:
+    # Lossless ZIP compression preserves every extracted byte. Fixed headers
+    # are deterministic with the same Python/zlib build. Model weights are excluded.
+    with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as result:
         for name, data in sorted(selected.items()):
             info = zipfile.ZipInfo(name, date_time=(2020, 1, 1, 0, 0, 0))
             info.create_system = 3
             info.external_attr = 0o100644 << 16
-            info.compress_type = zipfile.ZIP_STORED
-            result.writestr(info, data)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            result.writestr(info, data, compresslevel=9)
     with zipfile.ZipFile(archive) as check:
         if check.testzip() is not None or set(check.namelist()) != selected.keys():
             raise ValueError('Archive integrity check failed')

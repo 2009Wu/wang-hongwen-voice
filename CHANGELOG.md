@@ -2,6 +2,16 @@
 
 [中文首页](README.md) · [English README](README.en.md) · [全部发布版本 / Releases](https://github.com/2009Wu/wang-hongwen-voice/releases)
 
+## v0.3.0 — 低显存与中文一键生成
+
+- 6 GB 级显卡起步，自动按空闲显存选择节省/均衡/性能档位；低档 CPU 分离伴奏并分阶段载入 GPU。
+- 中文启动器与统一首页，输入文字或放入文件即可一键生成；高级选项默认收起，保留旧 API。
+- 保留模型、参考、默认 40 步和混音效果；新增与 WAV 样本完全一致的无损 FLAC。
+- 发布 ZIP 改用无损压缩，成功安装自动清理安装下载缓存，保留模型与环境。
+- 已进行 4.5 GiB 分配上限测试；物理 6 GB GPU 尚待验证，详见 docs/v0.3.0-Validation.md。
+
+English: Automatic memory profiles, Chinese one-button workflow, lossless packaging/FLAC and setup-cache cleanup. Physical 6 GB hardware is not yet validated.
+
 ## [v0.2.2 — Windows 首次下载修复 / Windows first-download fix](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.2)
 
 ### 中文

@@ -1,58 +1,23 @@
-王洪文语音工作室：Windows 快速开始
+王洪文语音工作室 v0.3.0 — 从这里开始
 
-1. 将整个 Windows ZIP 解压到固定文件夹。
-2. 双击 Start Voice Studio.exe。
-3. 点击 Set up & open Voice Studio（安装并打开）。
-4. 安装完成后，浏览器会自动打开工作室。
+1. 完整解压 ZIP，不要直接在压缩包内运行。
+2. 双击 Start Voice Studio.exe，点击「安装并打开工作室」。
+3. 浏览器打开后，输入文字或放入音频/视频，点击「一键生成」。
+4. 完成后试听并下载 MP3 或无损 FLAC；更多下载内有 WAV 和视频。
 
-需要：64 位 Windows 10/11、16 GB 级或更大显存的 NVIDIA 显卡、
-可用的 NVIDIA 驱动、30 GB 剩余空间，以及首次下载所需网络。
+两种输入一次只选一种。高级选项默认自动选择，无需修改。
+使用时保持启动器开启。首次安装和首次生成需联网下载数 GB。
+要求：64 位 Windows 10/11、6 GB 级以上 NVIDIA 显卡及可用驱动。
+建议 16 GB 系统内存，安装前预留 30 GB 磁盘。
+6 GB 模式会较慢；物理 6 GB 显卡尚待实机验证。
+低显存模式已在 16 GB 显卡、4.5 GiB PyTorch 分配上限下测试，详见 docs/v0.3.0-Validation.md。
+默认模型和 40 步质量不降低；安装包无损压缩，成功安装后自动清理安装下载缓存。
 
-使用期间保持启动器开启；生成结果请及时下载保存。
-再次使用时打开同一个 EXE，点击 Open Voice Studio。
-安装中断或移动文件夹后，可使用 Repair setup。
+中文完整手册：docs/Windows-Setup.zh-CN.md
+版本记录：CHANGELOG.md
+程序与模型分别在本目录 .runtime 和 .cache，保留它们可继续使用。
+所有输出均为 AI 合成演绎，并非真实录音或演唱。
 
-完整中文手册也在解压后的 docs/Windows-Setup.zh-CN.md，可用文本编辑器打开。
-更新记录在 CHANGELOG.md。
-
-中文手册：https://github.com/2009Wu/wang-hongwen-voice/blob/main/docs/Windows-Setup.zh-CN.md
-版本更新：https://github.com/2009Wu/wang-hongwen-voice/blob/main/CHANGELOG.md
-英文说明：https://github.com/2009Wu/wang-hongwen-voice/blob/main/README.en.md
-
-生成内容均为 AI 合成演绎，并非真实录音或演唱。
-
--------------------- ENGLISH --------------------
-
-WANG HONGWEN VOICE STUDIO - WINDOWS
-
-1. Extract the complete ZIP to a folder where you want to keep the app.
-2. Double-click "Start Voice Studio.exe" inside that folder.
-3. Click "Set up & open Voice Studio" and wait for the setup to finish.
-
-The app opens in your web browser automatically. Later, open the same EXE
-and click "Open Voice Studio". Keep the launcher open while using the app.
-
-You need:
-- 64-bit Windows 10 or 11
-- An NVIDIA graphics card with 16 GB or more video memory
-- A current NVIDIA graphics driver
-- At least 30 GB of free space on the app's drive
-- Internet access for the first setup and first model downloads
-
-Python, the GPU software libraries, FFmpeg, and the app environments are
-set up automatically inside .runtime. AI models are kept in .cache.
-First setup downloads several GB and can take a while. No Docker,
-terminal commands, manual Python setup, or account login is needed.
-
-If setup is interrupted, open the launcher again and choose Repair setup.
-It reuses completed downloads and installed packages. If you move the app
-folder after setup, run Repair setup at its new location.
-
-Close the browser tab whenever you like. Click Stop or close the launcher
-to shut down the local app. Save your generated audio before closing it.
-
-More help: docs/Windows-Setup.md
-Project: https://github.com/2009Wu/wang-hongwen-voice
-
-All generated speech and singing are AI interpretations, not authentic
-recordings or performances.
+English: Extract the entire ZIP, run Start Voice Studio.exe, click 安装并打开工作室
+(Set up and open). Enter text OR add a vocal song, then click 一键生成 (Generate).
+Keep the launcher open. See docs/Windows-Setup.md.

@@ -119,6 +119,12 @@ def export_mp3(wav, output):
     ffmpeg(["-v", "error", "-i", wav, "-c:a", "libmp3lame", "-b:a", "320k", "-metadata", "comment=" + COMMENT, output])
 
 
+def export_flac(wav, output):
+    """Lossless compression of the exact mastered 24-bit PCM samples."""
+    ffmpeg(["-v", "error", "-i", wav, "-c:a", "flac", "-compression_level", "8",
+            "-metadata", "comment=" + COMMENT, output])
+
+
 def export_video(source, wav, output):
     # Keep the first video stream and replace all original audio. No GPU encoder required.
     ffmpeg(["-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", FORMATS, "-i", source,

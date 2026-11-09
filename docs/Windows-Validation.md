@@ -1,5 +1,7 @@
 # Windows 下载验证与首次下载修复 · v0.2.2
 
+最新验证请查看 [v0.3.0 低显存与一键生成](v0.3.0-Validation.md)。以下为 v0.2.2 历史记录。
+
 ## 本次验证（中文）
 
 - 从 Hugging Face 公开页面的按钮重新下载 GitHub v0.2.1 Windows ZIP，核对附件 SHA-256。

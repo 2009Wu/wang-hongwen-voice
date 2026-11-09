@@ -50,17 +50,17 @@ def stop_worker(process):
 def readable_error(log):
     tail = "\n".join(log)
     if "CUDA out of memory" in tail or "OutOfMemoryError" in tail:
-        return "The GPU ran out of memory. Restart the Space or select a GPU with more memory."
+        return "显存不足 / CUDA out of memory：关闭游戏等占用显卡的程序，在高级选项选择「6 GB 节省显存」再试。"
     if "A CUDA GPU is required" in tail:
         if os.getenv("VOICE_STUDIO_DESKTOP") == "1":
             return "Update the NVIDIA graphics driver, restart Windows, and use Repair setup in the launcher."
         return "Select GPU hardware in the Space Settings, then restart the Space."
     if any(x in tail for x in ["ConnectionError", "LocalEntryNotFoundError", "ReadTimeout", "HTTPError", "HfHubHTTPError"]):
-        return "A model download failed. Check the Space's internet access and try again; completed downloads are cached."
+        return "模型 download failed：请检查网络后重试，已完成的下载会保留。"
     for line in reversed(log):
         if line.startswith(("ValueError: ", "RuntimeError: ")):
             return line.split(": ", 1)[1][:300]
-    return "Generation failed. The Space owner can check the runtime logs for details."
+    return "生成失败，请查看启动器的运行日志后重试。"
 
 
 def run_job(request):
@@ -90,7 +90,7 @@ def run_job(request):
                 lines.put(None)
 
             threading.Thread(target=reader, daemon=True).start()
-            started, last_update, fraction, message = time.monotonic(), 0, 0, "Starting the voice engine…"
+            started, last_update, fraction, message = time.monotonic(), 0, 0, "正在启动语音引擎…"
             while True:
                 if time.monotonic() - started > JOB_TIMEOUT:
                     raise TimeoutError("Generation timed out. Try a shorter song or text.")
@@ -115,10 +115,10 @@ def run_job(request):
                 print("Worker failed:\n" + "\n".join(log), flush=True)
                 raise RuntimeError(readable_error(log))
             result = json.loads((job / "result.json").read_text(encoding="utf-8"))
-            for key in ["audio", "wav", "video", "details"]:
+            for key in ["audio", "wav", "video", "details"] + (["flac"] if "flac" in result else []):
                 if result[key] and not Path(result[key]).is_relative_to(job / "results"):
                     raise RuntimeError("Unexpected output path")
-            yield 1, f"Ready · {result['elapsed_seconds']:.0f}s · AI-generated", result
+            yield 1, f"已完成 · {result['elapsed_seconds']:.0f} 秒 · AI 生成", result
         finally:
             if process:
                 stop_worker(process)

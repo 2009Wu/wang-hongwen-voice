@@ -6,30 +6,27 @@ Open-source AI singing conversion and text-to-speech using an archival Wang Hong
 
 **[Project page and speech sample on Hugging Face](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)** · [Validation record](VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [GPL-3.0](LICENSE)
 
-Current Windows package: **v0.2.2**, fixing a Windows permission error during the first speech-model download. Chinese-first quickstart and complete English instructions are included. The launcher still requires a 16 GB-class NVIDIA GPU; 8 GB support has not been validated.
+Current release: **v0.3.0**, a Chinese-first one-button interface, automatic 6/8/12 GB memory profiles, lossless ZIP/FLAC compression, and installer-cache cleanup.
 
-## Windows: start here
+## Windows quickstart
 
-1. **[Download the Windows ZIP](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** and extract the complete folder.
-2. Double-click **Start Voice Studio.exe**.
-3. Click **Set up & open Voice Studio**. After setup, the app opens in your browser automatically.
+1. [Download the Windows ZIP](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip) and extract everything.
+2. Run **Start Voice Studio.exe**, click **安装并打开工作室** (Set up and open).
+3. Enter text OR upload an existing vocal song, click **一键生成** (Generate), then download MP3 or lossless FLAC.
 
-The launcher installs its private Python, GPU libraries, audio tools, and app environments. No Docker or terminal commands are needed. Later, open the same EXE and click **Open Voice Studio**. Keep the launcher open while using the app.
+Keep the launcher open. Advanced settings are collapsed; automatic memory selection is the default. No manual Python/Docker/terminal setup.
 
-Requires **64-bit Windows 10/11, an NVIDIA GPU with 8 GB+ VRAM, a current graphics driver, 30 GB free space, and internet for the initial downloads**. Setup and the first AI generations download several GB. [Beginner setup guide and troubleshooting](docs/Windows-Setup.md).
+Requires 64-bit Windows 10/11, a **6 GB-class or larger NVIDIA GPU**, a current driver, internet for first downloads, and 30 GB free disk space during setup. 16 GB system RAM is recommended. Low-memory singing uses CPU separation and sequential GPU residency; larger profiles reduce CPU work/transfers. More VRAM alone does not guarantee a particular speed.
 
-<details>
-<summary>See the launcher and app</summary>
+**Physical 6 GB hardware is not yet validated.** Low-memory inference was tested on an RTX 5070 Ti 16 GB with a 4.5 GiB PyTorch allocator cap; this does not limit all driver memory and is not equivalent to real 6 GB hardware. [Validation scope](docs/v0.3.0-Validation.md).
 
-![Windows launcher](docs/windows-launcher.png)
+All weights, references, default 40 steps and mixing settings are preserved. FLAC decodes to the exact WAV PCM samples. Successful setup removes only app-owned pip/download caches, preserving models and runtime.
 
-![Voice Studio interface](docs/app-preview.png)
-
-</details>
+![Chinese one-button interface](docs/app-preview.png)
 
 ## What it does
 
-- **Singing covers:** Upload an existing vocal song or music video. Demucs separates the instrumental, Seed-VC converts the lead, and the app exports a finished mix. WAV and 320 kbps MP3 are included; video uploads can also produce an MP4.
+- **Singing covers:** Upload an existing vocal song or music video. Demucs separates the instrumental, Seed-VC converts the lead, and the app exports a finished mix. Lossless FLAC, WAV and 320 kbps MP3 are included; video uploads can also produce an MP4.
 - **Text to speech:** Enter text and generate reference-conditioned speech with Qwen3-TTS 0.6B Base. Chinese is closest to the archival reference; ten languages and automatic language selection are exposed.
 - **Vocal-forward defaults:** Original melody and pitch, 40 diffusion steps, gentle EQ/compression, +4.5 dB lead, −1.5 dB backing, and slight instrumental ducking during vocals.
 - **Full-song processing:** Overlapping 40-second windows handle songs up to ten minutes by default. The default speech limit is 600 characters; both limits are configurable.
@@ -38,7 +35,7 @@ The app uses reference conditioning, without a separately trained Wang Hongwen c
 
 ## Docker / developer setup
 
-Start with an NVIDIA CUDA GPU with **16 GB+ VRAM**, Docker, and an NVIDIA-capable Docker runtime. From this repository's root:
+Start with an NVIDIA CUDA GPU with **6 GB-class or larger VRAM**, Docker, and an NVIDIA-capable Docker runtime. From this repository's root:
 
 ```sh
 docker build -t wang-voice .

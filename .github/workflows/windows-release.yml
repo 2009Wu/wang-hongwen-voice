@@ -1,6 +1,9 @@
 name: Windows 发布附件 / Release assets
 
 on:
+  push:
+    branches: [main]
+    paths: ['releases/windows.json']
   release:
     types: [published]
   workflow_dispatch:
@@ -14,7 +17,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: windows-release-${{ github.event.release.tag_name || inputs.tag }}
+  group: windows-release-${{ github.event.release.tag_name || inputs.tag || 'manifest' }}
   cancel-in-progress: false
 
 jobs:
@@ -25,7 +28,23 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
+      - name: 获取已审核发布清单 / Read approved release manifest
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 "https://github.com/$GITHUB_REPOSITORY.git" source
+          test "$(git -C source rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          meta = json.loads(Path('source/releases/windows.json').read_text())
+          assert re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', meta['tag'])
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('RELEASE_TAG=' + meta['tag'] + '\n')
+          PY
       - name: 获取对应版本源码 / Clone tagged source
+        if: github.event_name != 'push'
         shell: bash
         run: |
           set -euo pipefail
@@ -38,8 +57,21 @@ jobs:
           set -euo pipefail
           python3 source/windows/package_release.py --output-dir dist | tee package-result.json
           cat dist/Wang-Hongwen-Voice-Studio-Windows.zip.sha256 >> "$GITHUB_STEP_SUMMARY"
+      - name: 创建带附件的发布草稿 / Create release draft
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          title=$(python3 -c 'import json; print(json.load(open("source/releases/windows.json"))["title"])')
+          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --title "$title" --notes-file "source/docs/releases/$RELEASE_TAG.md" --repo "$GITHUB_REPOSITORY"
       - name: 上传 ZIP 与校验文件 / Upload release assets
         shell: bash
         run: |
           set -euo pipefail
           gh release upload "$RELEASE_TAG" dist/Wang-Hongwen-Voice-Studio-Windows.zip dist/Wang-Hongwen-Voice-Studio-Windows.zip.sha256 --repo "$GITHUB_REPOSITORY"
+      - name: 完成发布 / Publish complete release
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release edit "$RELEASE_TAG" --draft=false --latest --repo "$GITHUB_REPOSITORY"

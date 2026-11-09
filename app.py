@@ -55,70 +55,81 @@ def speech(text, language, progress=gr.Progress()):
         raise gr.Error(str(error)) from error
 
 
+def make_request(text, upload, performance="auto", quality=40, vocals=4.5, music=-1.5, video=True, language="Chinese"):
+    text = (text or "").strip()
+    if bool(text) == bool(upload):
+        raise ValueError("请输入文字或放入一个音频/视频文件；一次只选一种。")
+    if text:
+        if len(text) > MAX_TEXT:
+            raise ValueError(f"文字最多 {MAX_TEXT} 字。")
+        return {"mode": "speak", "text": text, "language": language, "performance": performance}
+    path = Path(upload)
+    if not path.is_file() or path.stat().st_size > MAX_MB * 1024**2:
+        raise ValueError(f"请选择不超过 {MAX_MB} MB 的音频/视频。")
+    return {"mode": "sing", "input": str(path.resolve()), "performance": performance,
+            "steps": quality, "vocal_db": vocals, "music_db": music, "video": video}
+
+
+def generate(text, upload, performance, quality, vocals, music, video, language, progress=gr.Progress()):
+    try:
+        request = make_request(text, upload, performance, quality, vocals, music, video, language)
+        yield None, None, None, None, None, None, "准备生成…"
+        for fraction, message, result in run_job(request):
+            progress(fraction, desc=message)
+            if result:
+                yield result["audio"], result["audio"], result.get("flac"), result["wav"], result["video"], result["details"], message
+            else:
+                yield *(gr.skip() for _ in range(6)), message
+    except Exception as error:
+        raise gr.Error(str(error)) from error
+
+
 def build_app():
-    with gr.Blocks(title="Wang Hongwen Voice Studio", delete_cache=(600, 3600)) as demo:
-        gr.HTML('''<div id="masthead"><div class="eyebrow">VOICE STUDIO · AI INTERPRETATION</div>
-        <h1>Wang Hongwen <span class="zh">王洪文</span></h1>
-        <p>Give a song a new voice, or turn your words into speech.<br>
-        Create AI interpretations inspired by archival recordings.</p></div>''')
-        if os.getenv("VOICE_STUDIO_DESKTOP") == "1":
-            gr.Markdown("**First use:** the app downloads its AI models when you generate audio. Keep the launcher open while using Voice Studio.", elem_classes="note")
-        with gr.Tabs():
-            with gr.Tab("Sing a song", id="sing"):
-                with gr.Row(equal_height=False):
-                    with gr.Column(scale=6):
-                        gr.Markdown("### Your song", elem_classes="panel-title")
-                        upload = gr.File(label="Drop an audio or video file", file_types=[".mp3", ".wav", ".m4a", ".mp4", ".flac", ".ogg", ".webm", ".mov", ".aac", ".mkv"], type="filepath")
-                        gr.Markdown(f"Up to {MAX_SECONDS // 60} minutes · {MAX_MB} MB. Start with a song that already has vocals.", elem_classes="note")
-                        with gr.Accordion("Voice & mix", open=True):
-                            vocals = gr.Slider(-2, 9, value=4.5, step=.5, label="Lead vocal level (dB)", info="Bring the lead forward over the backing track.")
-                            music = gr.Slider(-12, 3, value=-1.5, step=.5, label="Instrumental level (dB)")
-                            quality = gr.Dropdown(choices=[("Quick", 20), ("Standard", 40), ("Detailed", 60)], value=40, label="Conversion quality")
-                            video = gr.Checkbox(value=True, label="Also export MP4 when the upload contains video")
-                        gr.Markdown("Original melody and pitch · Gentle vocal clarity boost · Instrumental ducks slightly while singing", elem_classes="note")
-                        with gr.Row():
-                            convert = gr.Button("Create AI cover", variant="primary", scale=3)
-                            cancel_song = gr.Button("Stop", scale=1)
-                    with gr.Column(scale=5):
-                        gr.Markdown("### Your cover", elem_classes="panel-title")
-                        song_status = gr.Textbox(label="Status", value="Upload a song to begin.", interactive=False)
-                        song_audio = gr.Audio(label="AI cover preview", type="filepath", interactive=False)
-                        with gr.Row():
-                            song_wav = gr.DownloadButton(label="Download WAV · lossless")
-                            song_mp3 = gr.DownloadButton(label="Download MP3 · 320 kbps")
-                        song_video = gr.DownloadButton(label="Download MP4 · video with AI vocals")
-                        with gr.Accordion("Generation details", open=False):
-                            song_details = gr.DownloadButton(label="Download generation details · JSON")
-            with gr.Tab("Text to speech", id="speech"):
-                with gr.Row(equal_height=False):
-                    with gr.Column(scale=6):
-                        gr.Markdown("### Your words", elem_classes="panel-title")
-                        text = gr.Textbox(label="Text to read", placeholder="输入你想让他说的话……", lines=8, max_lines=14)
-                        gr.Markdown(f"Up to {MAX_TEXT} characters. Chinese is closest to the reference's original speech.", elem_classes="note")
-                        language = gr.Dropdown(LANGUAGES, value="Chinese", label="Language")
-                        gr.Examples(examples=[["大家好，欢迎来到语音工作室。今天我们一起来听一首歌。", "Chinese"], ["Hello, and welcome to the voice studio. This is an AI-generated demonstration.", "English"]], inputs=[text, language])
-                        with gr.Row():
-                            read = gr.Button("Generate speech", variant="primary", scale=3)
-                            cancel_speech = gr.Button("Stop", scale=1)
-                    with gr.Column(scale=5):
-                        gr.Markdown("### Your speech", elem_classes="panel-title")
-                        speech_status = gr.Textbox(label="Status", value="Enter text to begin.", interactive=False)
-                        speech_audio = gr.Audio(label="AI speech preview", type="filepath", interactive=False)
-                        with gr.Row():
-                            speech_wav = gr.DownloadButton(label="Download WAV · lossless")
-                            speech_mp3 = gr.DownloadButton(label="Download MP3 · 320 kbps")
-                        with gr.Accordion("Generation details", open=False):
-                            speech_details = gr.DownloadButton(label="Download generation details · JSON")
-        gr.Markdown("**AI-generated voice interpretation.** These outputs are synthetic, and are not authentic Wang Hongwen recordings. Voice similarity varies with the song, text, and archival reference quality. Downloads are temporary; save your results.", elem_classes="note")
-        song_event = convert.click(singing, [upload, vocals, music, quality, video],
-                                  [song_audio, song_wav, song_mp3, song_video, song_details, song_status],
-                                  concurrency_limit=1, concurrency_id="gpu", api_name="sing")
-        speech_event = read.click(speech, [text, language], [speech_audio, speech_wav, speech_mp3, speech_details, speech_status],
-                                 concurrency_limit=1, concurrency_id="gpu", api_name="speak")
-        cancel_song.click(fn=lambda: "Stopped. You can start a new generation.", outputs=song_status,
-                          cancels=[song_event], queue=False, api_name=False)
-        cancel_speech.click(fn=lambda: "Stopped. You can start a new generation.", outputs=speech_status,
-                            cancels=[speech_event], queue=False, api_name=False)
+    with gr.Blocks(title="王洪文语音工作室", delete_cache=(600, 3600)) as demo:
+        gr.Markdown("# 王洪文语音工作室\n输入文字，或放入有原唱的音频/视频，然后点击 **一键生成**。")
+        gr.Markdown("首次生成会下载模型；以后会使用本地缓存。使用期间请保持启动器开启。", elem_classes="note")
+        with gr.Row(equal_height=False):
+            with gr.Column(scale=6):
+                text = gr.Textbox(label="文字 → 生成语音", placeholder="输入你想让他说的话……", lines=4)
+                upload = gr.File(label="音频/视频 → 生成翻唱", type="filepath",
+                                 file_types=[".mp3", ".wav", ".m4a", ".mp4", ".flac", ".ogg", ".webm", ".mov", ".aac", ".mkv"])
+                gr.Markdown(f"两种输入任选其一。文字最多 {MAX_TEXT} 字；文件最多 {MAX_MB} MB、{MAX_SECONDS // 60} 分钟。", elem_classes="note")
+                with gr.Accordion("高级选项（通常无需修改）", open=False):
+                    performance = gr.Dropdown(choices=[("自动选择（推荐）", "auto"), ("6 GB 节省显存 · 较慢", "low"),
+                                                       ("8 GB 均衡", "balanced"), ("12 GB+ 性能优先", "fast")], value="auto", label="性能档位")
+                    gr.Markdown("自动根据可用显存选择；6 GB 模式用 CPU 分离伴奏并分阶段载入 GPU。显卡算力、CPU 和音频长度也会影响速度。")
+                    quality = gr.Dropdown(choices=[("快速 · 20 步", 20), ("标准 · 40 步（默认）", 40), ("精细 · 60 步", 60)], value=40, label="翻唱质量")
+                    vocals = gr.Slider(-2, 9, value=4.5, step=.5, label="人声响度（dB）")
+                    music = gr.Slider(-12, 3, value=-1.5, step=.5, label="伴奏响度（dB）")
+                    video = gr.Checkbox(True, label="输入为视频时，同时导出 MP4")
+                    language = gr.Dropdown(LANGUAGES, value="Chinese", label="文字朗读语言（中文最贴近参考声音）")
+                with gr.Row():
+                    create = gr.Button("一键生成", variant="primary", scale=3)
+                    stop = gr.Button("停止", scale=1)
+            with gr.Column(scale=5):
+                status = gr.Textbox(label="进度", value="等待文字或文件。", interactive=False)
+                audio = gr.Audio(label="AI 生成试听", type="filepath", interactive=False)
+                mp3 = gr.DownloadButton("下载 MP3 · 通用")
+                flac = gr.DownloadButton("下载 FLAC · 无损且更小")
+                with gr.Accordion("更多下载", open=False):
+                    wav = gr.DownloadButton("下载 WAV · 无损")
+                    movie = gr.DownloadButton("下载 MP4 · 翻唱视频")
+                    details = gr.DownloadButton("下载生成参数和显存记录")
+        gr.Markdown("**所有输出均为 AI 合成演绎，并非王洪文真实录音。** 相似度取决于素材。结果临时保留，请及时下载保存。", elem_classes="note")
+        event = create.click(generate, [text, upload, performance, quality, vocals, music, video, language],
+                             [audio, mp3, flac, wav, movie, details, status], api_name="generate",
+                             concurrency_limit=1, concurrency_id="gpu")
+        stop.click(lambda: "已停止，可以重新生成。", outputs=status, cancels=[event], queue=False, api_name=False)
+        # Keep the v0.2 sing/speak API contracts for existing scripts.
+        with gr.Column(visible=False):
+            legacy_song = gr.Button("legacy sing")
+            legacy_speech = gr.Button("legacy speak")
+            legacy_song_status = gr.Textbox()
+            legacy_speech_status = gr.Textbox()
+        legacy_song.click(singing, [upload, vocals, music, quality, video], [audio, wav, mp3, movie, details, legacy_song_status],
+                          api_name="sing", concurrency_limit=1, concurrency_id="gpu")
+        legacy_speech.click(speech, [text, language], [audio, wav, mp3, details, legacy_speech_status],
+                            api_name="speak", concurrency_limit=1, concurrency_id="gpu")
     return demo
 
 
