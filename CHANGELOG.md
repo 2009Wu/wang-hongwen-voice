@@ -2,7 +2,22 @@
 
 [中文首页](README.md) · [English README](README.en.md) · [全部发布版本 / Releases](https://github.com/2009Wu/wang-hongwen-voice/releases)
 
-## 在线文档更新 / Online documentation update
+## [v0.2.1 — 中文新手说明包 / Chinese beginner documentation](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.1)
+
+### 中文
+
+- Windows ZIP 内加入《开始使用.txt》、完整中文安装与使用手册、英文按钮对照及版本更新日志。
+- `START HERE.txt` 改为中文在前、英文在后，保留独立英文 README。
+- GitHub 简介改为中文优先，并补充翻唱、语音与 Windows 相关主题标签。
+- 新增发布附件打包流程：生成 Windows ZIP 和 SHA-256 校验文件，并上传到对应 Release。
+
+本版只更新文档与打包流程，启动器、生成代码、模型配置和参考素材均沿用 v0.2.0。原 v0.2.0 发布包仍可下载。此版本完成了包完整性、中文文档、相对链接和运行文件一致性检查；未重复下载模型或宣称新增其他电脑的安装验证。
+
+### English
+
+The Windows package now includes a Chinese-first quickstart, complete Chinese installation/use guide, button translations, and changelog. English documentation remains available. Repository metadata is Chinese-first with relevant topics. A release workflow builds and uploads the Windows ZIP and checksum. Application code, launcher, model configuration, and reference assets are unchanged from v0.2.0; this is a documentation/package update. Package integrity and unchanged runtime files were checked without repeating model downloads or claiming new hardware validation.
+
+## 早期在线文档更新 / Earlier online documentation update
 
 ### 中文
 

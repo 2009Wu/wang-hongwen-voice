@@ -52,9 +52,9 @@
 
 ## 当前版本与更新方法
 
-当前 Windows 发布版为 **[v0.2.0：Windows 安装向导](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.0)**。新增图形化安装、GPU 检查、自动依赖准备、修复安装、自动打开浏览器和停止控制。
+当前 Windows 发布版为 **[v0.2.1：中文新手说明包](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.2.1)**。下载包已包含中文快速开始、完整安装使用手册和更新日志；翻唱、语音模型与启动器功能沿用 v0.2.0。
 
-程序目前不自动更新。安装新版本前，请先保存生成结果并关闭启动器，然后从 [Releases](https://github.com/2009Wu/wang-hongwen-voice/releases) 下载新 ZIP。完整的升级与模型缓存迁移步骤见[中文手册](docs/Windows-Setup.zh-CN.md#更新到新版本)，每个版本的变化见 [CHANGELOG.md](CHANGELOG.md)。
+程序目前不自动更新。安装新版本前，请先保存生成结果并关闭启动器，然后从 [Releases](https://github.com/2009Wu/wang-hongwen-voice/releases) 下载新 ZIP。完整的升级与模型缓存迁移步骤见[中文手册](docs/Windows-Setup.zh-CN.md#7-更新到新版本)，每个版本的变化见 [CHANGELOG.md](CHANGELOG.md)。
 
 最新在线文档随主分支更新；历史 ZIP 以其对应发布内容为准。
 

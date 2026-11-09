@@ -12,6 +12,9 @@
 再次使用时打开同一个 EXE，点击 Open Voice Studio。
 安装中断或移动文件夹后，可使用 Repair setup。
 
+完整中文手册也在解压后的 docs/Windows-Setup.zh-CN.md，可用文本编辑器打开。
+更新记录在 CHANGELOG.md。
+
 中文手册：https://github.com/2009Wu/wang-hongwen-voice/blob/main/docs/Windows-Setup.zh-CN.md
 版本更新：https://github.com/2009Wu/wang-hongwen-voice/blob/main/CHANGELOG.md
 英文说明：https://github.com/2009Wu/wang-hongwen-voice/blob/main/README.en.md

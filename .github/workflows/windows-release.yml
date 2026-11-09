@@ -1,0 +1,45 @@
+name: Windows 发布附件 / Release assets
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '已有 Release 的版本标签 / Existing release tag'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: 获取对应版本源码 / Clone tagged source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Expected vMAJOR.MINOR.PATCH'; exit 1; }
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName
+          git clone --depth 1 --branch "$RELEASE_TAG" "https://github.com/$GITHUB_REPOSITORY.git" source
+      - name: 打包并校验 / Build and validate package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 source/windows/package_release.py --output-dir dist | tee package-result.json
+          cat dist/Wang-Hongwen-Voice-Studio-Windows.zip.sha256 >> "$GITHUB_STEP_SUMMARY"
+      - name: 上传 ZIP 与校验文件 / Upload release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_TAG" dist/Wang-Hongwen-Voice-Studio-Windows.zip dist/Wang-Hongwen-Voice-Studio-Windows.zip.sha256 --repo "$GITHUB_REPOSITORY"

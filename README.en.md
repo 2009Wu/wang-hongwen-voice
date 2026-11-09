@@ -6,6 +6,8 @@ Open-source AI singing conversion and text-to-speech using an archival Wang Hong
 
 **[Project page and speech sample on Hugging Face](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)** · [Validation record](VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [GPL-3.0](LICENSE)
 
+Current Windows package: **v0.2.1**, with Chinese-first quickstart, installation/use instructions, and changelog included. The application engine and launcher are unchanged from v0.2.0.
+
 ## Windows: start here
 
 1. **[Download the Windows ZIP](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** and extract the complete folder.
