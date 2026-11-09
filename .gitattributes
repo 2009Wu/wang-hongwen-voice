@@ -1,0 +1,6 @@
+*.wav binary
+*.mp3 binary
+*.png binary
+*.py text eol=lf
+*.md text eol=lf
+Dockerfile text eol=lf

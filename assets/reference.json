@@ -1,0 +1,15 @@
+{
+  "source": "User-supplied archival speech recording of Wang Hongwen",
+  "source_sha256": "da1fa17b3b349f24f833ba0535bf6f8b05615620002cab97e23c807a335408a6",
+  "singing_excerpt_seconds": [
+    0.15,
+    20.15
+  ],
+  "speech_excerpt_seconds": [
+    30,
+    40.5
+  ],
+  "speech_transcript": "总理对四届人大人选，心里是好像有一本账了，比较清楚的。",
+  "processing": "60 Hz high-pass; original reference level; no speaker fine-tuning",
+  "recording_license": "Not licensed by this project; separate from the GPL code license."
+}
