@@ -1,4 +1,4 @@
-王洪文语音工作室 v0.3.0 — 从这里开始
+王洪文语音工作室 v0.3.1 — 从这里开始
 
 1. 完整解压 ZIP，不要直接在压缩包内运行。
 2. 双击 Start Voice Studio.exe，点击「安装并打开工作室」。
@@ -21,3 +21,12 @@
 English: Extract the entire ZIP, run Start Voice Studio.exe, click 安装并打开工作室
 (Set up and open). Enter text OR add a vocal song, then click 一键生成 (Generate).
 Keep the launcher open. See docs/Windows-Setup.md.
+
+桌面入口：首次运行启动器会自动创建「王洪文语音工作室」桌面快捷方式。
+安装完成后，以后双击桌面图标即可自动启动并打开网页，无需再点「打开工作室」。
+直接下载 ZIP 不会运行程序，请先完整解压并运行一次 EXE。
+请保留完整程序文件夹；移动后运行新位置的 EXE，或点击「创建 / 修复桌面快捷方式」。
+重复双击会打开已有实例，避免重复启动占用显存。关闭启动器会停止本地服务。
+
+Desktop: first launch creates a shortcut. After setup, double-click it to open the studio directly.
+Keep the extracted folder. After moving it, run the EXE at its new location to repair the shortcut.

@@ -6,6 +6,12 @@
 
 **[下载 Windows 版](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** · [全部版本](https://github.com/2009Wu/wang-hongwen-voice/releases) · [Hugging Face 项目和试听](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)
 
+## 桌面一键打开
+
+完整解压后首次运行启动器，会自动在当前用户桌面创建「王洪文语音工作室」快捷方式；安装成功后也会补建。以后双击桌面图标，程序自动启动本地服务并打开网页，无需再次点击「打开工作室」。重复点击会打开已有实例。首次使用仍需完成安装，单纯下载 ZIP 不会自动执行程序。
+
+请保留完整程序文件夹。移动程序后，运行新位置的 EXE，或在启动器底部点击「创建 / 修复桌面快捷方式」。桌面权限受限时，快捷方式失败不会阻止安装；仍可运行 EXE。使用期间保持启动器开启。
+
 ## 三步开始
 
 1. 下载 **Wang-Hongwen-Voice-Studio-Windows.zip**，完整解压。
@@ -41,7 +47,7 @@
 
 ## 更新、开发和部署
 
-当前版本 **[v0.3.0：低显存与中文一键生成](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.3.0)**。
+当前版本 **[v0.3.1：桌面一键打开与照片图标](https://github.com/2009Wu/wang-hongwen-voice/releases/tag/v0.3.1)**。
 
 程序没有自动升级；「修复安装」只修复环境。升级前保存结果并关闭启动器，下载新 ZIP 完整解压。可复制旧目录 `.cache` 复用模型；环境移动后使用修复安装。完整方法见[中文手册](docs/Windows-Setup.zh-CN.md)。
 

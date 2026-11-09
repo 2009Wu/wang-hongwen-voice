@@ -6,7 +6,7 @@ Open-source AI singing conversion and text-to-speech using an archival Wang Hong
 
 **[Project page and speech sample on Hugging Face](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)** · [Validation record](VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [GPL-3.0](LICENSE)
 
-Current release: **v0.3.0**, a Chinese-first one-button interface, automatic 6/8/12 GB memory profiles, lossless ZIP/FLAC compression, and installer-cache cleanup.
+Current release **v0.3.1** adds photo icons and direct-open desktop shortcuts to a Chinese-first one-button interface, automatic 6/8/12 GB memory profiles, lossless ZIP/FLAC compression, and installer-cache cleanup.
 
 ## Windows quickstart
 
@@ -99,3 +99,7 @@ Project software is **GPL-3.0**; see [LICENSE](LICENSE). Required Seed-VC source
 The archival WAV references are **excluded from the software license**. This project does not claim ownership of, or grant new redistribution rights to, those recordings. Their derivation and source-file hash are in [assets/reference.json](assets/reference.json). The synthetic welcome sample is in [docs/speech-sample.mp3](docs/speech-sample.mp3).
 
 AI outputs are interpretations, not authentic Wang Hongwen recordings or performances. Preserve the AI-generated label when sharing results.
+
+## Desktop shortcut
+
+First launcher run and successful setup create a current-user desktop shortcut. After setup, double-click it to start the local server and open the studio directly. A second click reuses the running instance. Keep the extracted app folder. After moving it, run the EXE from the new location or use 创建 / 修复桌面快捷方式 (Create / repair desktop shortcut). Downloading a ZIP alone does not execute the app. Desktop permission errors do not invalidate installation.

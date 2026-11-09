@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+﻿// SPDX-License-Identifier: GPL-3.0-only
 // Build using the .NET Framework C# compiler; no third-party GUI runtime required.
 using System;
 using System.Collections.Generic;
@@ -29,7 +29,11 @@ internal static class Program {
         string root = AppDomain.CurrentDomain.BaseDirectory;
         for (int i = 0; i < args.Length - 1; i++) if (args[i] == "--root") root = args[++i];
         root = Path.GetFullPath(root);
-        if (args.Contains("--self-test")) return Engine.SelfTest(root);
+        if (args.Contains("--self-test")) { int result = DesktopIntegration.SelfTest(root); return result == 0 ? Engine.SelfTest(root) : result; }
+        if (args.Contains("--create-shortcut")) {
+            try { DesktopIntegration.CreateForCurrentUser(); return 0; }
+            catch (Exception error) { MessageBox.Show("无法创建桌面快捷方式：" + error.Message); return 1; }
+        }
         if (args.Contains("--install-only") || args.Contains("--serve-only") || args.Contains("--diagnose")) {
             try {
                 Console.SetOut(new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true });
@@ -44,7 +48,17 @@ internal static class Program {
         }
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new LauncherForm(root));
+        // A second double-click reopens the existing app instead of starting another server.
+        string key = DesktopIntegration.InstanceKey(root);
+        using (var mutex = new Mutex(false, key))
+        using (var openSignal = new EventWaitHandle(false, EventResetMode.AutoReset, key + "-open")) {
+            bool owns = false;
+            try {
+                try { owns = mutex.WaitOne(0); } catch (AbandonedMutexException) { owns = true; }
+                if (!owns) { openSignal.Set(); return 0; }
+                Application.Run(new LauncherForm(root, args.Contains("--open"), openSignal));
+            } finally { if (owns) mutex.ReleaseMutex(); }
+        }
         return 0;
     }
 }
@@ -290,8 +304,11 @@ internal sealed class Engine {
             Run(Python("ui"), new[] {doctor, "ui"}, token, 5);
             Run(Python("singing"), new[] {doctor, "singing"}, token, 5);
             Run(Python("speech"), new[] {doctor, "speech"}, token, 5);
-            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.0" }));
+            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.1" }));
             CleanupInstallCaches();
+            // Desktop integration is optional: restricted desktops must not invalidate setup.
+            try { DesktopIntegration.CreateForCurrentUser(); }
+            catch (Exception error) { WriteLog("桌面快捷方式未创建，可在启动器中重试：" + error.Message); }
             Stage(100, "安装完成，可以打开工作室。");
         }
     }
@@ -378,7 +395,9 @@ internal sealed class LauncherForm : Form {
     private CancellationTokenSource cancel;
     private Process server;
     private bool busy;
-    internal LauncherForm(string root) {
+    private readonly System.Windows.Forms.Timer openTimer = new System.Windows.Forms.Timer();
+    internal LauncherForm(string root, bool autoOpen, EventWaitHandle openSignal) {
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Text = "王洪文语音工作室"; Size = new Size(820, 630); MinimumSize = new Size(760, 580); StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(248, 246, 242); Font = new Font("Segoe UI", 10); AutoScaleMode = AutoScaleMode.Dpi;
         var title = new Label { Text = "王洪文语音工作室", Font = new Font("Segoe UI", 26, FontStyle.Bold), ForeColor = Color.FromArgb(36, 43, 43), Location = new Point(30, 22), Size = new Size(700, 54) };
@@ -396,6 +415,9 @@ internal sealed class LauncherForm : Form {
         showDetail.CheckedChanged += (sender, e) => { detail.Visible = showDetail.Checked; quickHelp.Visible = !showDetail.Checked; };
         var logs = new LinkLabel { Text = "打开安装日志", Location = new Point(34, 545), Size = new Size(190, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
         logs.LinkClicked += (sender, e) => { if (File.Exists(engine.LogPath)) Process.Start(new ProcessStartInfo(engine.LogPath) { UseShellExecute = true }); };
+        var desktopLink = new LinkLabel { Text = "创建 / 修复桌面快捷方式", Location = new Point(240, 545), Size = new Size(300, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
+        desktopLink.LinkClicked += (sender, e) => EnsureDesktopShortcut(true);
+        Controls.Add(desktopLink);
         Controls.AddRange(new Control[] {title, subtitle, hardware, status, progress, hint, primary, repair, stop, showDetail, quickHelp, detail, logs});
         engine = new Engine(root, UpdateProgress, AppendLog);
         RefreshButtons();
@@ -406,7 +428,29 @@ internal sealed class LauncherForm : Form {
             if (busy && MessageBox.Show("安装仍在进行，要停止并关闭吗？之后可以继续安装。", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) { e.Cancel = true; return; }
             if (cancel != null) cancel.Cancel(); engine.CancelSetup(); Engine.KillTree(server);
         };
-        Shown += async (sender, e) => { try { string text = await Task.Run(() => engine.HardwareCheck(false)); hardware.Text = text; } catch (Exception error) { hardware.Text = error.Message; } };
+        openTimer.Interval = 350;
+        openTimer.Tick += async (sender, e) => { if (openSignal.WaitOne(0)) await OpenFromShortcut(); };
+        FormClosed += (sender, e) => openTimer.Dispose();
+        Shown += async (sender, e) => {
+            EnsureDesktopShortcut(false);
+            openTimer.Start();
+            if (autoOpen && engine.IsReady()) { await OpenFromShortcut(); return; }
+            try { string text = await Task.Run(() => engine.HardwareCheck(false)); hardware.Text = text; }
+            catch (Exception error) { hardware.Text = error.Message; }
+        };
+    }
+    private void EnsureDesktopShortcut(bool notify) {
+        try {
+            DesktopIntegration.CreateForCurrentUser();
+            if (notify) MessageBox.Show("桌面快捷方式已创建。以后双击桌面图标即可直接打开工作室。\n请保留解压后的完整程序文件夹。", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        } catch (Exception error) { AppendLog("桌面快捷方式未创建：" + error.Message); if (notify) MessageBox.Show(error.Message, Text); }
+    }
+    private async Task OpenFromShortcut() {
+        if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal;
+        Show(); Activate();
+        if (busy) return;
+        if (server != null && !server.HasExited) OpenApp();
+        else if (engine.IsReady()) await BeginWork(false);
     }
     private void RefreshButtons() {
         if (busy) { primary.Enabled = false; repair.Enabled = false; stop.Enabled = true; return; }

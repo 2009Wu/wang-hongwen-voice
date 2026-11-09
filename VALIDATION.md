@@ -25,3 +25,5 @@ The original singing pipeline also rendered the user's full 222.42-second song a
 Docker was unavailable in the local environment. The Docker image has **not** been built or run here, and the app has **not** been deployed on Hugging Face. The Dockerfile, SDK metadata, port, user permissions, dependency separation, and model download paths were prepared against the official Docker Spaces documentation. Cloud build/hardware differences remain to be verified after upload. Only Chinese TTS was integration-tested; the other exposed languages follow Qwen's published support list.
 
 No source song, local virtual environment, downloaded checkpoint, authentication token, or user-specific absolute path is included in the upload package. Reference WAV files are intentionally included as the app's default voice and have a separate rights statement in the README.
+
+最新启动器变更验证：[桌面一键打开](docs/Desktop-Shortcut-Validation.md)。

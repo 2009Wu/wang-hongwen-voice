@@ -26,8 +26,8 @@ EXCLUDED = {'.git', '.runtime', '.cache', '__pycache__', '.pytest_cache',
 REQUIRED = ROOT_FILES | {
     'docs/Windows-Setup.zh-CN.md', 'docs/Windows-Setup.md',
     'windows/runtime-pins.json', 'windows/VoiceStudioLauncher.cs',
-    'windows/package_release.py', 'assets/singing-reference.wav',
-    'assets/speech-reference.wav', 'vendor/seed_vc/LICENSE',
+    'windows/package_release.py', 'windows/DesktopIntegration.cs', 'assets/singing-reference.wav',
+    'assets/speech-reference.wav', 'assets/app-icon.ico', 'assets/icon-source.jpg', 'vendor/seed_vc/LICENSE',
 }
 
 

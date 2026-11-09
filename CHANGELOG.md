@@ -2,6 +2,16 @@
 
 [中文首页](README.md) · [English README](README.en.md) · [全部发布版本 / Releases](https://github.com/2009Wu/wang-hongwen-voice/releases)
 
+## v0.3.1 — 桌面一键打开
+
+- 使用用户提供的照片作为程序、启动器窗口与桌面快捷方式图标；包含多尺寸 ICO，保留完整原照片。
+
+- 首次运行和安装成功后自动创建中文桌面快捷方式；安装后双击直接启动并打开网页。
+- 重复点击复用已有启动器；新增「创建 / 修复桌面快捷方式」，支持移动目录后修复入口。
+- 桌面写入失败不会导致安装失败；不改变生成模型、参考音频或音质参数。
+
+English: Automatic per-user desktop shortcuts, direct opening after setup, single-instance reuse and shortcut repair after moving the app folder.
+
 ## v0.3.0 — 低显存与中文一键生成
 
 - 6 GB 级显卡起步，自动按空闲显存选择节省/均衡/性能档位；低档 CPU 分离伴奏并分阶段载入 GPU。

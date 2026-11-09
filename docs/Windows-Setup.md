@@ -1,4 +1,4 @@
-# Windows quickstart — v0.3.0
+# Windows quickstart — v0.3.1
 
 [中文完整手册](Windows-Setup.zh-CN.md)
 
@@ -13,3 +13,7 @@ Automatic profiles trade CPU work and model transfers for memory; they do not ch
 Successful installation removes only .runtime/pip-cache and .runtime/downloads. Models remain in .cache. Preserve .runtime and .cache to keep using the installation. There is no automatic upgrade: save outputs, close the launcher, download a new release to a new folder, optionally copy .cache, and install. Repair setup refreshes environment paths after moving an existing folder.
 
 All audio is an AI interpretation, not an authentic recording. Software is GPL-3.0; archival recordings have separate rights notices.
+
+## Desktop shortcut
+
+First launcher run and successful setup create a current-user desktop shortcut. After setup, double-click it to start the local server and open the studio directly. A second click reuses the running instance. Keep the extracted app folder. After moving it, run the EXE from the new location or use 创建 / 修复桌面快捷方式 (Create / repair desktop shortcut). Downloading a ZIP alone does not execute the app. Desktop permission errors do not invalidate installation.

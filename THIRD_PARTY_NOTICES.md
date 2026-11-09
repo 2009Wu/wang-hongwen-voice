@@ -28,3 +28,5 @@ Dependencies and weights are downloaded from their upstream publishers at build/
 Installed packages include their own license files. FFmpeg, SoX, and system libraries come from Debian packages with their respective licenses; they are not relicensed by this project. Audio references and user uploads are separate from the code license, as described in the main README.
 
 Pinned model revision identifiers and model-card license metadata are in `models.json`. No person-specific trained checkpoint is claimed or included.
+
+The application icon is converted from a user-supplied photograph. The photograph is separate from the GPL software license; no additional image rights are asserted by this project. Original file: assets/icon-source.jpg.
