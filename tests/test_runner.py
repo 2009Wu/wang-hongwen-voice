@@ -45,6 +45,12 @@ class RunnerTests(unittest.TestCase):
         self.assertIn("GPU hardware", runner.readable_error(["RuntimeError: A CUDA GPU is required"]))
         self.assertIn("out of memory", runner.readable_error(["torch.OutOfMemoryError: CUDA out of memory"]))
 
+    def test_desktop_gpu_errors_refer_to_the_launcher(self):
+        with patch.dict(os.environ, {"VOICE_STUDIO_DESKTOP": "1"}):
+            error = runner.readable_error(["RuntimeError: A CUDA GPU is required"])
+        self.assertIn("Repair setup", error)
+        self.assertNotIn("Space Settings", error)
+
 
 if __name__ == "__main__":
     unittest.main()

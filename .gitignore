@@ -1,5 +1,6 @@
 # Model/runtime state
 .cache/
+.runtime/
 checkpoints/
 jobs/
 results/

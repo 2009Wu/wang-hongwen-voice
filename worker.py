@@ -25,6 +25,8 @@ def prepare_environment():
     import torch
     torch.set_num_threads(int(os.getenv("CPU_THREADS", "4")))
     if not torch.cuda.is_available():
+        if os.getenv("VOICE_STUDIO_DESKTOP") == "1":
+            raise RuntimeError("A CUDA GPU is required. Update the NVIDIA driver and use Repair setup in the launcher.")
         raise RuntimeError("A CUDA GPU is required. Select GPU hardware in the Space Settings and restart.")
     torch.manual_seed(42)
 

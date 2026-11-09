@@ -4,7 +4,24 @@ Open-source AI singing conversion and text-to-speech using an archival Wang Hong
 
 **[Project page and speech sample on Hugging Face](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)** · [Validation record](VALIDATION.md) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [GPL-3.0](LICENSE)
 
+## Windows: start here
+
+1. **[Download the Windows ZIP](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** and extract the complete folder.
+2. Double-click **Start Voice Studio.exe**.
+3. Click **Set up & open Voice Studio**. After setup, the app opens in your browser automatically.
+
+The launcher installs its private Python, GPU libraries, audio tools, and app environments. No Docker or terminal commands are needed. Later, open the same EXE and click **Open Voice Studio**. Keep the launcher open while using the app.
+
+Requires **64-bit Windows 10/11, an NVIDIA GPU with 16 GB+ VRAM, a current graphics driver, 30 GB free space, and internet for the initial downloads**. Setup and the first AI generations download several GB. [Beginner setup guide and troubleshooting](docs/Windows-Setup.md).
+
+<details>
+<summary>See the launcher and app</summary>
+
+![Windows launcher](docs/windows-launcher.png)
+
 ![Voice Studio interface](docs/app-preview.png)
+
+</details>
 
 ## What it does
 
@@ -15,7 +32,7 @@ Open-source AI singing conversion and text-to-speech using an archival Wang Hong
 
 The app uses reference conditioning, without a separately trained Wang Hongwen checkpoint. Outputs are clearly labeled AI-generated. Voice similarity varies with the source and archival recording quality. Instrumental-only input does not invent singing or lyrics.
 
-## Run locally
+## Docker / developer setup
 
 Start with an NVIDIA CUDA GPU with **16 GB+ VRAM**, Docker, and an NVIDIA-capable Docker runtime. From this repository's root:
 

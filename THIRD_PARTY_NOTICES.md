@@ -1,5 +1,7 @@
 # Third-party components
 
+The optional Windows launcher downloads a private CPython 3.12.10 NuGet distribution from the CPython team's NuGet package and FFmpeg 8.1.2 from Gyan's Windows builds. Download URLs and pinned SHA-256 values are in `windows/runtime-pins.json`. These archives are downloaded during setup, and their license/source files are preserved in `.runtime/`. Python uses its PSF license; Gyan identifies these FFmpeg builds as GPLv3. The small project ZIP does not redistribute either runtime archive or the model weights.
+
 This package contains required inference source from [Plachtaa/seed-vc](https://github.com/Plachtaa/seed-vc), commit `51383efd921027683c89e5348211d93ff12ac2a8`, under GPL-3.0. The upstream license is in `vendor/seed_vc/LICENSE`; original file notices and nested licenses are retained. The upstream README is also retained. Training programs, unrelated example recordings, and checkpoints are not distributed here.
 
 Changes to the vendored source:

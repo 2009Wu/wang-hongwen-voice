@@ -52,6 +52,8 @@ def readable_error(log):
     if "CUDA out of memory" in tail or "OutOfMemoryError" in tail:
         return "The GPU ran out of memory. Restart the Space or select a GPU with more memory."
     if "A CUDA GPU is required" in tail:
+        if os.getenv("VOICE_STUDIO_DESKTOP") == "1":
+            return "Update the NVIDIA graphics driver, restart Windows, and use Repair setup in the launcher."
         return "Select GPU hardware in the Space Settings, then restart the Space."
     if any(x in tail for x in ["ConnectionError", "LocalEntryNotFoundError", "ReadTimeout", "HTTPError", "HfHubHTTPError"]):
         return "A model download failed. Check the Space's internet access and try again; completed downloads are cached."

@@ -61,6 +61,8 @@ def build_app():
         <h1>Wang Hongwen <span class="zh">王洪文</span></h1>
         <p>Give a song a new voice, or turn your words into speech.<br>
         Create AI interpretations inspired by archival recordings.</p></div>''')
+        if os.getenv("VOICE_STUDIO_DESKTOP") == "1":
+            gr.Markdown("**First use:** the app downloads its AI models when you generate audio. Keep the launcher open while using Voice Studio.", elem_classes="note")
         with gr.Tabs():
             with gr.Tab("Sing a song", id="sing"):
                 with gr.Row(equal_height=False):
@@ -126,6 +128,6 @@ if __name__ == "__main__":
         server_name=os.getenv("HOST", "0.0.0.0"), server_port=int(os.getenv("PORT", "7860")),
         theme=gr.themes.Soft(primary_hue="red", neutral_hue="slate", font=["Inter", "system-ui", "sans-serif"]), css=CSS,
         max_file_size=f"{MAX_MB}mb", show_error=False,
-        blocked_paths=[str(ASSETS), str(CACHE), str(ROOT / "vendor")],
+        blocked_paths=[str(ASSETS), str(CACHE), str(ROOT / "vendor"), str(ROOT / ".runtime")],
         footer_links=[],
     )

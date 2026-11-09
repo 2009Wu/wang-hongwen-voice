@@ -1,5 +1,7 @@
 # Validation record
 
+For the v0.2.0 Windows setup wizard and its fresh-install integration checks, see [docs/Windows-Validation.md](docs/Windows-Validation.md). The original app/package validation follows below.
+
 Validated locally on Windows with Python 3.12.10, PyTorch 2.7.1 + CUDA 12.8, and an NVIDIA RTX 5070 Ti (16 GB VRAM).
 
 ## Executed checks

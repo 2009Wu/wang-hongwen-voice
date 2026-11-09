@@ -1,0 +1,14 @@
+{
+  "python": {
+    "version": "3.12.10",
+    "url": "https://api.nuget.org/v3-flatcontainer/python/3.12.10/python.3.12.10.nupkg",
+    "sha256": "0eb85c2dfccccf1b17352de4c397f69194035b7d37149eacc16f1147d93de3b8",
+    "file": "python.3.12.10.nupkg"
+  },
+  "ffmpeg": {
+    "version": "8.1.2",
+    "url": "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.1.2-essentials_build.zip",
+    "sha256": "db580001caa24ac104c8cb856cd113a87b0a443f7bdf47d8c12b1d740584a2ec",
+    "file": "ffmpeg-8.1.2-essentials_build.zip"
+  }
+}
