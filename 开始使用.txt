@@ -1,0 +1,19 @@
+王洪文语音工作室：Windows 快速开始
+
+1. 将整个 Windows ZIP 解压到固定文件夹。
+2. 双击 Start Voice Studio.exe。
+3. 点击 Set up & open Voice Studio（安装并打开）。
+4. 安装完成后，浏览器会自动打开工作室。
+
+需要：64 位 Windows 10/11、16 GB 级或更大显存的 NVIDIA 显卡、
+可用的 NVIDIA 驱动、30 GB 剩余空间，以及首次下载所需网络。
+
+使用期间保持启动器开启；生成结果请及时下载保存。
+再次使用时打开同一个 EXE，点击 Open Voice Studio。
+安装中断或移动文件夹后，可使用 Repair setup。
+
+中文手册：https://github.com/2009Wu/wang-hongwen-voice/blob/main/docs/Windows-Setup.zh-CN.md
+版本更新：https://github.com/2009Wu/wang-hongwen-voice/blob/main/CHANGELOG.md
+英文说明：https://github.com/2009Wu/wang-hongwen-voice/blob/main/README.en.md
+
+生成内容均为 AI 合成演绎，并非真实录音或演唱。
