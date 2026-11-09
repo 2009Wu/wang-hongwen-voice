@@ -16,7 +16,7 @@ Current Windows package: **v0.2.1**, with Chinese-first quickstart, installation
 
 The launcher installs its private Python, GPU libraries, audio tools, and app environments. No Docker or terminal commands are needed. Later, open the same EXE and click **Open Voice Studio**. Keep the launcher open while using the app.
 
-Requires **64-bit Windows 10/11, an NVIDIA GPU with 16 GB+ VRAM, a current graphics driver, 30 GB free space, and internet for the initial downloads**. Setup and the first AI generations download several GB. [Beginner setup guide and troubleshooting](docs/Windows-Setup.md).
+Requires **64-bit Windows 10/11, an NVIDIA GPU with 8 GB+ VRAM, a current graphics driver, 30 GB free space, and internet for the initial downloads**. Setup and the first AI generations download several GB. [Beginner setup guide and troubleshooting](docs/Windows-Setup.md).
 
 <details>
 <summary>See the launcher and app</summary>
