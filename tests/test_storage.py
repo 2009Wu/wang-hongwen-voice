@@ -13,6 +13,29 @@ spec.loader.exec_module(compact_runtime)
 
 
 class StorageTests(unittest.TestCase):
+    def test_unused_demo_assets_only_and_repair_refresh(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            remove = ['.runtime/python/tools/Lib/site-packages/torch/include/c10/test.h',
+                      '.runtime/speech/Lib/site-packages/gradio/templates/frontend/app.js',
+                      '.runtime/speech/Lib/site-packages/gradio/templates/node/server.js',
+                      '.runtime/ffmpeg/pinned/doc/ffmpeg.html']
+            keep = ['.runtime/ui/Lib/site-packages/gradio/templates/frontend/app.js',
+                    '.runtime/speech/Lib/site-packages/gradio/templates/frontend/LICENSE.txt',
+                    '.runtime/python/tools/Lib/site-packages/torch/include/NOTICE',
+                    '.runtime/pycache/existing.pyc', '.cache/huggingface/model.safetensors']
+            for name in remove + keep:
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b'keep or remove')
+            self.assertEqual(set(compact_runtime.compact(root)['removed']), set(remove))
+            self.assertTrue(all((root / name).read_bytes() == b'keep or remove' for name in keep))
+            restored = root / remove[0]
+            restored.write_bytes(b'from repair')
+            self.assertTrue(compact_runtime.compact(root, once=True)['already_done'])
+            self.assertTrue(restored.exists())
+            self.assertEqual(compact_runtime.compact(root)['removed'], [remove[0]])
+
     def test_only_build_libraries_and_player_removed(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

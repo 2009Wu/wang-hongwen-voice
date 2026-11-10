@@ -265,8 +265,10 @@ internal sealed class Engine {
             if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked cache entry rejected");
         foreach (string child in Directory.EnumerateDirectories(directory)) CheckCacheTree(child);
     }
-    private void CompactRuntime(CancellationToken token) {
-        Run(BasePython, new[] {Path.Combine(Root, "windows", "compact_runtime.py"), "--root", Root}, token, 2);
+    private void CompactRuntime(CancellationToken token, bool once = false) {
+        var args = new List<string> {Path.Combine(Root, "windows", "compact_runtime.py"), "--root", Root};
+        if (once) args.Add("--once");
+        Run(BasePython, args.ToArray(), token, 2);
     }
     internal void Setup(CancellationToken token) {
         Directory.CreateDirectory(Runtime);
@@ -308,7 +310,7 @@ internal sealed class Engine {
             Run(Python("ui"), new[] {doctor, "ui"}, token, 5);
             Run(Python("singing"), new[] {doctor, "singing"}, token, 5);
             Run(Python("speech"), new[] {doctor, "speech"}, token, 5);
-            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.2" }));
+            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.3" }));
             CompactRuntime(token);
             CleanupInstallCaches();
             // Desktop integration is optional: restricted desktops must not invalidate setup.
@@ -329,7 +331,7 @@ internal sealed class Engine {
         Stage(100, "正在检查显卡…"); WriteLog(HardwareCheck(false));
         Run(BasePython, new[] {Path.Combine(Root, "windows", "check_install.py"), "gpu"}, token, 5);
         Run(BasePython, new[] {Path.Combine(Root, "windows", "restore_references.py"), "--root", Root, "--ffmpeg", Tool("ffmpeg")}, token, 2);
-        CompactRuntime(token);
+        CompactRuntime(token, true);
         int port = FindPort(startPort);
         var info = ProcessInfo(Python("ui"), new[] {Path.Combine(Root, "app.py")});
         info.EnvironmentVariables["PORT"] = port.ToString(CultureInfo.InvariantCulture);
@@ -409,10 +411,10 @@ internal sealed class LauncherForm : Form {
         BackColor = Color.FromArgb(248, 246, 242); Font = new Font("Segoe UI", 10); AutoScaleMode = AutoScaleMode.Dpi;
         var title = new Label { Text = "王洪文语音工作室", Font = new Font("Segoe UI", 26, FontStyle.Bold), ForeColor = Color.FromArgb(36, 43, 43), Location = new Point(30, 22), Size = new Size(700, 54) };
         var subtitle = new Label { UseMnemonic = false, Text = "AI 歌曲翻唱与文字语音 · 6 GB 起步，自动选择性能档位", Location = new Point(34, 80), Size = new Size(700, 27), ForeColor = Color.FromArgb(115, 62, 50) };
-        hardware.SetBounds(34, 121, 730, 42); hardware.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; hardware.ForeColor = Color.FromArgb(90, 100, 95); hardware.Text = "Windows 10/11 · NVIDIA 6 GB 显存起步 · 建议预留 30 GB 空间";
+        hardware.SetBounds(34, 121, 730, 42); hardware.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; hardware.ForeColor = Color.FromArgb(90, 100, 95); hardware.Text = "Windows 10/11 · NVIDIA 6 GB 显存起步 · 首次安装前预留 30 GB 可用空间";
         status.SetBounds(34, 175, 730, 52); status.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; status.Font = new Font("Segoe UI", 12, FontStyle.Bold);
         progress.SetBounds(34, 233, 730, 15); progress.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        var hint = new Label { Text = "首次安装和首次生成需下载数 GB，之后使用缓存。\n环境保存在程序文件夹内，安装成功后自动清理安装下载缓存。", Location = new Point(34, 263), Size = new Size(730, 52), ForeColor = Color.FromArgb(103, 112, 109), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        var hint = new Label { Text = "装好并缓存完整模型后约占 11 GB，随缓存和结果变化。\n首次安装前需有 30 GB 可用空间（含临时文件），装好后自动清理。", Location = new Point(34, 263), Size = new Size(730, 52), ForeColor = Color.FromArgb(103, 112, 109), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
         primary.SetBounds(34, 329, 300, 44); primary.UseMnemonic = false; primary.BackColor = Color.FromArgb(158, 57, 46); primary.ForeColor = Color.White; primary.FlatStyle = FlatStyle.Flat;
         repair.SetBounds(350, 329, 180, 44); repair.Text = "修复安装"; repair.FlatStyle = FlatStyle.Flat;
         stop.SetBounds(546, 329, 150, 44); stop.Text = "停止"; stop.FlatStyle = FlatStyle.Flat; stop.Enabled = false;

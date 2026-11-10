@@ -31,3 +31,7 @@ No source song, local virtual environment, downloaded checkpoint, authentication
 ## v0.3.2
 
 本次体积优化及回归范围见 [体积验证](docs/v0.3.2-Storage-Validation.md)。
+
+## v0.3.3
+
+[安装后体积与验证范围](docs/v0.3.3-Storage-Validation.md)。

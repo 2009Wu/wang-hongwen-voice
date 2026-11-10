@@ -1,5 +1,14 @@
 # 版本更新 / Changelog
 
+## v0.3.3 — 安装空间说明与进一步精简
+
+- 明确 30 GB 是首次安装前的可用空间要求（含临时文件）；自选音色装好并缓存完整模型后实测约 11.25 GiB。
+- 清理本程序不使用的上游演示界面、开发头文件和工具文档，当前环境再减少 183,939,829 字节，约 184 MB。
+- 保留当前界面、许可文件、模型、运行 DLL、Python 与模型加速缓存；不改生成计算、精度、步数和导出设置。
+- 完成后记录精简状态，下次启动不再扫描数千个文件；修复安装后自动重新清理。
+
+English: Clarify temporary setup space versus installed size and trim unused demo assets, headers and tool manuals without changing the inference runtime or model settings.
+
 ## v0.3.2 — 精简安装体积
 
 - 安装与启动时自动清理本程序不使用的 PyTorch 开发静态库和 ffplay 播放器，实测运行环境节省 980,103,826 字节（约 980 MB / 0.91 GiB）。不改模型权重、运行 DLL、精度、步数、音高和混音。保留模型缓存和 Python 缓存。安装时仍需预留 30 GB，首次仍会下载数 GB。
