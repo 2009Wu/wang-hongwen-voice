@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 // Build using the .NET Framework C# compiler; no third-party GUI runtime required.
 using System;
 using System.Collections.Generic;
@@ -265,6 +265,9 @@ internal sealed class Engine {
             if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked cache entry rejected");
         foreach (string child in Directory.EnumerateDirectories(directory)) CheckCacheTree(child);
     }
+    private void CompactRuntime(CancellationToken token) {
+        Run(BasePython, new[] {Path.Combine(Root, "windows", "compact_runtime.py"), "--root", Root}, token, 2);
+    }
     internal void Setup(CancellationToken token) {
         Directory.CreateDirectory(Runtime);
         using (var setupLock = new FileStream(Path.Combine(Runtime, "setup.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)) {
@@ -282,6 +285,7 @@ internal sealed class Engine {
                 string archive = Download((Dictionary<string, object>)pins["ffmpeg"], token, 15);
                 Extract(archive, Path.Combine(Runtime, "ffmpeg"), token);
             }
+            Run(BasePython, new[] {Path.Combine(Root, "windows", "restore_references.py"), "--root", Root, "--ffmpeg", Tool("ffmpeg")}, token, 2);
             Stage(20, "正在安装 GPU 运行库，下载较大，请保持此窗口开启。");
             Pip(BasePython, new[] {"numpy==1.26.4"}, token);
             Pip(BasePython, new[] {"torch==2.7.1", "torchaudio==2.7.1", "--index-url", "https://download.pytorch.org/whl/cu128"}, token);
@@ -304,7 +308,8 @@ internal sealed class Engine {
             Run(Python("ui"), new[] {doctor, "ui"}, token, 5);
             Run(Python("singing"), new[] {doctor, "singing"}, token, 5);
             Run(Python("speech"), new[] {doctor, "speech"}, token, 5);
-            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.1" }));
+            File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.2" }));
+            CompactRuntime(token);
             CleanupInstallCaches();
             // Desktop integration is optional: restricted desktops must not invalidate setup.
             try { DesktopIntegration.CreateForCurrentUser(); }
@@ -323,6 +328,8 @@ internal sealed class Engine {
         if (!IsReady()) throw new InvalidOperationException("安装尚未完成，请先点击「安装并打开工作室」或「修复安装」。");
         Stage(100, "正在检查显卡…"); WriteLog(HardwareCheck(false));
         Run(BasePython, new[] {Path.Combine(Root, "windows", "check_install.py"), "gpu"}, token, 5);
+        Run(BasePython, new[] {Path.Combine(Root, "windows", "restore_references.py"), "--root", Root, "--ffmpeg", Tool("ffmpeg")}, token, 2);
+        CompactRuntime(token);
         int port = FindPort(startPort);
         var info = ProcessInfo(Python("ui"), new[] {Path.Combine(Root, "app.py")});
         info.EnvironmentVariables["PORT"] = port.ToString(CultureInfo.InvariantCulture);

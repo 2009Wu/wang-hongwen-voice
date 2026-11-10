@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "wav": "singing-reference.wav",
+      "flac": "singing-reference.flac",
+      "sha256": "e1647d68c718b7922f813b3a7805c067af0c845d9ac91aedf2d1e7bebc6def20",
+      "flac_sha256": "7c83ab7fb0a8230741f331391c54ba5f3e0d852d315beffb01f8f8e4cee87fa5",
+      "prefix": "UklGRhJgKABXQVZFZm10IBAAAAABAAEARKwAAMwEAgADABgAZGF0Ye1fKAA=",
+      "suffix": "AA==",
+      "pcm_bytes": 2645997,
+      "raw_format": "s24le",
+      "pcm_codec": "pcm_s24le"
+    },
+    {
+      "wav": "speech-reference.wav",
+      "flac": "speech-reference.flac",
+      "sha256": "3bba9f4ec2600e96b135c81b508e08d9a547e51ea07a851b905e0a4a0b8fc29d",
+      "flac_sha256": "01260a6eb7e87dcee0eead1de4496dc496296db0df8f4e64a5fbad7dabe55c59",
+      "prefix": "UklGRrghDgBXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YZQhDgA=",
+      "suffix": "",
+      "pcm_bytes": 926100,
+      "raw_format": "s16le",
+      "pcm_codec": "pcm_s16le"
+    }
+  ]
+}

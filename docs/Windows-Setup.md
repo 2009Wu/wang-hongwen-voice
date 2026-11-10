@@ -17,3 +17,9 @@ All audio is an AI interpretation, not an authentic recording. Software is GPL-3
 ## Desktop shortcut
 
 First launcher run and successful setup create a current-user desktop shortcut. After setup, double-click it to start the local server and open the studio directly. A second click reuses the running instance. Keep the extracted app folder. After moving it, run the EXE from the new location or use 创建 / 修复桌面快捷方式 (Create / repair desktop shortcut). Downloading a ZIP alone does not execute the app. Desktop permission errors do not invalidate installation.
+
+## 安装体积 / Disk use
+
+安装与启动时自动清理本程序不使用的 PyTorch 开发静态库和 ffplay 播放器，实测运行环境节省 980,103,826 字节（约 980 MB / 0.91 GiB）。不改模型权重、运行 DLL、精度、步数、音高和混音。保留模型缓存和 Python 缓存。安装时仍需预留 30 GB，首次仍会下载数 GB。
+
+开发者需要编译自定义 C++ 扩展时，请另建完整开发环境；启动器维护的是配音和翻唱所需的推理环境。升级时先保存结果、关闭启动器，把新 ZIP 完整解压覆盖回原位置，可保留 `.runtime` 和 `.cache`；下次打开会自动精简。请勿只复制 EXE。

@@ -25,8 +25,8 @@ EXCLUDED = {'.git', '.runtime', '.cache', '__pycache__', '.pytest_cache',
             '.venv', 'venv', 'node_modules', 'jobs', 'results', 'checkpoints'}
 REQUIRED = ROOT_FILES | {
     'docs/Windows-Setup.zh-CN.md', 'docs/Windows-Setup.md',
-    'windows/runtime-pins.json', 'windows/VoiceStudioLauncher.cs',
-    'windows/package_release.py', 'windows/DesktopIntegration.cs', 'assets/singing-reference.wav',
+    'windows/runtime-pins.json', 'windows/VoiceStudioLauncher.cs', 'windows/restore_references.py', 'assets/packed-references.json',
+    'windows/package_release.py', 'windows/compact_runtime.py', 'windows/DesktopIntegration.cs', 'assets/singing-reference.wav',
     'assets/speech-reference.wav', 'assets/app-icon.ico', 'assets/icon-source.jpg', 'vendor/seed_vc/LICENSE',
 }
 
@@ -55,7 +55,15 @@ def build(root: Path, output_dir: Path) -> dict:
             if re.search(r'\b(?:hf_|gh[pousr]_)[A-Za-z0-9]{30,}', content):
                 raise ValueError(f'Possible credential in {relative}')
         selected[relative.as_posix()] = data
-    missing = REQUIRED - selected.keys()
+    # FLAC payloads restore the exact WAV bytes before the app starts.
+    if all('assets/' + item['flac'] in selected for item in json.loads(
+            selected['assets/packed-references.json'])['files']):
+        for item in json.loads(selected['assets/packed-references.json'])['files']:
+            selected.pop('assets/' + item['wav'], None)
+        required = REQUIRED - {'assets/singing-reference.wav', 'assets/speech-reference.wav'}
+    else:
+        required = REQUIRED
+    missing = required - selected.keys()
     if missing:
         raise ValueError(f'Missing required release files: {sorted(missing)}')
     if not selected['Start Voice Studio.exe'].startswith(b'MZ'):

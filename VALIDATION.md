@@ -27,3 +27,7 @@ Docker was unavailable in the local environment. The Docker image has **not** be
 No source song, local virtual environment, downloaded checkpoint, authentication token, or user-specific absolute path is included in the upload package. Reference WAV files are intentionally included as the app's default voice and have a separate rights statement in the README.
 
 最新启动器变更验证：[桌面一键打开](docs/Desktop-Shortcut-Validation.md)。
+
+## v0.3.2
+
+本次体积优化及回归范围见 [体积验证](docs/v0.3.2-Storage-Validation.md)。
