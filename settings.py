@@ -2,12 +2,13 @@
 import os
 import sys
 import tempfile
+from studio_paths import model_cache, STATE
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / "assets"
 JOBS = Path(os.getenv("JOB_ROOT", str(Path(tempfile.gettempdir()) / "wang-voice-jobs"))).resolve()
-CACHE = Path(os.getenv("MODEL_CACHE", str(ROOT / ".cache"))).resolve()
+CACHE = model_cache()
 SING_PYTHON = os.getenv("SING_PYTHON", sys.executable)
 TTS_PYTHON = os.getenv("TTS_PYTHON", sys.executable)
 MAX_SECONDS = int(os.getenv("MAX_SONG_SECONDS", "600"))

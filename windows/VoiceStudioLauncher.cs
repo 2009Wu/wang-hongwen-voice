@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+﻿// SPDX-License-Identifier: GPL-3.0-only
 // Build using the .NET Framework C# compiler; no third-party GUI runtime required.
 using System;
 using System.Collections.Generic;
@@ -45,6 +45,11 @@ internal static class Program {
                 for (int i = 0; i < args.Length - 1; i++) if (args[i] == "--port") port = int.Parse(args[++i]);
                 using (Process server = engine.StartServer(port, CancellationToken.None)) { Console.WriteLine("@@READY " + engine.AppUrl); server.WaitForExit(); return server.ExitCode; }
             } catch (Exception error) { Console.Error.WriteLine(error.ToString()); return 1; }
+        }
+        if (File.Exists(Path.Combine(root, ".runtime", "update-transaction.json"))) {
+            var recovery = new Engine(root, (n, message) => {}, message => {});
+            try { recovery.HandoffUpdate(true); return 0; }
+            catch (Exception error) { MessageBox.Show("更新恢复未完成：" + error.Message); return 1; }
         }
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
@@ -115,10 +120,13 @@ internal sealed class Engine {
         env["PYTHONNOUSERSITE"] = "1"; env["PYTHONIOENCODING"] = "utf-8"; env["PYTHONUNBUFFERED"] = "1";
         env["PYTHONPYCACHEPREFIX"] = Path.Combine(Runtime, "pycache");
         env["PIP_CACHE_DIR"] = Path.Combine(Runtime, "pip-cache"); env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1";
-        env["HF_HOME"] = Path.Combine(Root, ".cache", "huggingface");
-        env["HF_HUB_CACHE"] = Path.Combine(Root, ".cache", "huggingface", "hub");
-        env["MODEL_CACHE"] = Path.Combine(Root, ".cache"); env["TORCH_HOME"] = Path.Combine(Root, ".cache", "torch");
-        env["NUMBA_CACHE_DIR"] = Path.Combine(Root, ".cache", "numba"); env["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1";
+        string cache = Environment.GetEnvironmentVariable("MODEL_CACHE");
+        if (String.IsNullOrEmpty(cache)) cache = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VoiceStudios", "models");
+        env["HF_HOME"] = Path.Combine(cache, "huggingface");
+        env["HF_HUB_CACHE"] = Path.Combine(cache, "huggingface", "hub");
+        env["MODEL_CACHE"] = cache; env["TORCH_HOME"] = Path.Combine(cache, "torch");
+        env["NUMBA_CACHE_DIR"] = Path.Combine(cache, "numba"); env["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1";
+        env["VOICE_LAUNCHER_PID"] = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
         env["GRADIO_ANALYTICS_ENABLED"] = "False"; env["TOKENIZERS_PARALLELISM"] = "false";
         env["VOICE_STUDIO_DESKTOP"] = "1"; env["HOST"] = "127.0.0.1";
         env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"; env["CUDA_VISIBLE_DEVICES"] = gpuIndex.ToString(CultureInfo.InvariantCulture);
@@ -326,7 +334,15 @@ internal sealed class Engine {
         }
         throw new InvalidOperationException("No free local app port was found. Close other copies of the app and try again.");
     }
+    internal void HandoffUpdate(bool recover) {
+        if (!File.Exists(BasePython)) throw new InvalidOperationException("请重新下载并解压完整安装包。");
+        var info = ProcessInfo(BasePython, new[] {Path.Combine(Root, "studio_update.py"), recover ? "recover" : "run-request", "--root", Root, "--wait-pid", Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture)});
+        info.StandardOutputEncoding = null; info.StandardErrorEncoding = null;
+        info.RedirectStandardOutput = false; info.RedirectStandardError = false;
+        Process.Start(info);
+    }
     internal Process StartServer(int startPort, CancellationToken token) {
+        Run(BasePython, new[] {Path.Combine(Root, "studio_paths.py"), "migrate-cache", Path.Combine(Root, ".cache")}, token, 10);
         if (!IsReady()) throw new InvalidOperationException("安装尚未完成，请先点击「安装并打开工作室」或「修复安装」。");
         Stage(100, "正在检查显卡…"); WriteLog(HardwareCheck(false));
         Run(BasePython, new[] {Path.Combine(Root, "windows", "check_install.py"), "gpu"}, token, 5);
@@ -438,7 +454,20 @@ internal sealed class LauncherForm : Form {
             if (cancel != null) cancel.Cancel(); engine.CancelSetup(); Engine.KillTree(server);
         };
         openTimer.Interval = 350;
-        openTimer.Tick += async (sender, e) => { if (openSignal.WaitOne(0)) await OpenFromShortcut(); };
+        openTimer.Tick += async (sender, e) => {
+            if (!busy && File.Exists(Path.Combine(engine.Runtime, "update-request.json"))) {
+                openTimer.Stop();
+                try {
+                    Engine.KillTree(server); server = null;
+                    engine.HandoffUpdate(false); Close();
+                } catch (Exception error) {
+                    File.Delete(Path.Combine(engine.Runtime, "update-request.json"));
+                    status.Text = "更新未开始：" + error.Message; openTimer.Start();
+                }
+                return;
+            }
+            if (openSignal.WaitOne(0)) await OpenFromShortcut();
+        };
         FormClosed += (sender, e) => openTimer.Dispose();
         Shown += async (sender, e) => {
             EnsureDesktopShortcut(false);

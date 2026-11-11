@@ -41,14 +41,14 @@ class RunnerTests(unittest.TestCase):
             process.stdout.close()
 
     def test_actionable_download_and_gpu_errors(self):
-        self.assertIn("download failed", runner.readable_error(["HfHubHTTPError: unavailable"]))
+        self.assertIn("下载失败", runner.readable_error(["HfHubHTTPError: unavailable"]))
         self.assertIn("GPU hardware", runner.readable_error(["RuntimeError: A CUDA GPU is required"]))
         self.assertIn("out of memory", runner.readable_error(["torch.OutOfMemoryError: CUDA out of memory"]))
 
     def test_desktop_gpu_errors_refer_to_the_launcher(self):
         with patch.dict(os.environ, {"VOICE_STUDIO_DESKTOP": "1"}):
             error = runner.readable_error(["RuntimeError: A CUDA GPU is required"])
-        self.assertIn("Repair setup", error)
+        self.assertIn("修复安装", error)
         self.assertNotIn("Space Settings", error)
 
 

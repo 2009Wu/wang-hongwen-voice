@@ -1,3 +1,5 @@
+最新版：[v0.4.0 验证记录](docs/v0.4.0-Validation.md)。下方为历史记录。
+
 # Validation record
 
 Latest: [v0.3.0 low-memory and one-button validation](docs/v0.3.0-Validation.md). Earlier results below are historical.

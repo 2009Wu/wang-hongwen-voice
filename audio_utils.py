@@ -35,7 +35,7 @@ def probe(path):
     return data
 
 
-def decode_input(path, destination, max_seconds, max_mb):
+def decode_input(path, destination, max_seconds, max_mb, start_seconds=0, duration_seconds=None):
     path = Path(path).resolve(strict=True)
     if not path.is_file() or path.stat().st_size > max_mb * 1024**2:
         raise ValueError(f"Upload a file smaller than {max_mb} MB.")
@@ -45,8 +45,14 @@ def decode_input(path, destination, max_seconds, max_mb):
         raise ValueError("The file must have a measurable duration.")
     if duration > max_seconds + .05:
         raise ValueError(f"The song limit is {max_seconds // 60} minutes. Trim the file first.")
+    start_seconds = float(start_seconds)
+    if not math.isfinite(start_seconds) or start_seconds < 0 or start_seconds >= duration:
+        raise ValueError("试听起点超出了歌曲时长。")
+    clip_seconds = max_seconds + 1 if duration_seconds is None else float(duration_seconds)
+    if not math.isfinite(clip_seconds) or clip_seconds <= 0:
+        raise ValueError("试听长度无效。")
     ffmpeg(["-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", FORMATS,
-            "-i", path, "-t", str(max_seconds + 1), "-map", "0:a:0", "-vn", "-ac", "2", "-ar", "44100",
+            "-ss", str(start_seconds), "-i", path, "-t", str(clip_seconds), "-map", "0:a:0", "-vn", "-ac", "2", "-ar", "44100",
             "-c:a", "pcm_f32le", destination])
     audio, rate = sf.read(destination, dtype="float32", always_2d=True)
     if not np.isfinite(audio).all() or len(audio) < rate:
@@ -125,9 +131,9 @@ def export_flac(wav, output):
             "-metadata", "comment=" + COMMENT, output])
 
 
-def export_video(source, wav, output):
+def export_video(source, wav, output, start_seconds=0):
     # Keep the first video stream and replace all original audio. No GPU encoder required.
-    ffmpeg(["-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", FORMATS, "-i", source,
+    ffmpeg(["-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", FORMATS, "-ss", str(start_seconds), "-i", source,
             "-i", wav, "-map", "0:v:0", "-map", "1:a:0", "-vf", "scale=720:-2,fps=30", "-c:v", "libx264",
             "-preset", "fast", "-crf", "24", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "256k",
             "-metadata", "comment=" + COMMENT, "-movflags", "+faststart", "-shortest", output], timeout=1800)
@@ -154,3 +160,9 @@ def split_text(text, limit=100):
     if current:
         result.append(current)
     return result
+
+
+def export_video_copy(source, wav, output):
+    """Use the already exported video stream without another lossy video encode."""
+    ffmpeg(["-v", "error", "-i", source, "-i", wav, "-map", "0:v:0", "-map", "1:a:0",
+            "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-shortest", output])

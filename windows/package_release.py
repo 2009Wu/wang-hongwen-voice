@@ -13,6 +13,8 @@ import re
 import zipfile
 
 ROOT_FILES = {
+    'studio_ui.py','studio_paths.py','studio_library.py','studio_song.py','studio_actions.py',
+    'studio_update.py','studio_diagnostics.py','studio-version.json',
     '.dockerignore', '.gitattributes', '.gitignore', 'CHANGELOG.md',
     'Dockerfile', 'LICENSE', 'README.en.md', 'README.md', 'START HERE.txt',
     'Start Voice Studio.exe', 'THIRD_PARTY_NOTICES.md', 'VALIDATION.md',
@@ -70,6 +72,10 @@ def build(root: Path, output_dir: Path) -> dict:
         raise ValueError('Missing Windows launcher executable')
     if not selected['START HERE.txt'].decode('utf-8-sig').startswith('王洪文'):
         raise ValueError('Quickstart must put Chinese first')
+    product = json.loads(selected['studio-version.json'])
+    manifest = {'product':product['id'],'version':product['version'],
+                'files':{name:hashlib.sha256(data).hexdigest() for name,data in selected.items()}}
+    selected['release-manifest.json'] = json.dumps(manifest,ensure_ascii=False,sort_keys=True,indent=2).encode('utf-8')
     output_dir.mkdir(parents=True, exist_ok=True)
     archive = output_dir / 'Wang-Hongwen-Voice-Studio-Windows.zip'
     # Lossless ZIP compression preserves every extracted byte. Fixed headers
