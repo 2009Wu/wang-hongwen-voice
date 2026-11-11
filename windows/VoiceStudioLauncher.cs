@@ -334,6 +334,35 @@ internal sealed class Engine {
         }
         throw new InvalidOperationException("No free local app port was found. Close other copies of the app and try again.");
     }
+    internal bool PrepareAutomaticUpdate(CancellationToken token) {
+        token.ThrowIfCancellationRequested();
+        string request = Path.Combine(Runtime, "update-request.json");
+        if (File.Exists(request)) return true;
+        Stage(100, "正在检查工作室更新…");
+        try {
+            using (Process helper = Spawn(BasePython, new[] {Path.Combine(Root, "studio_update.py"), "prepare-automatic"}, false)) {
+                activeSetupProcess = helper;
+                var timer = Stopwatch.StartNew();
+                try {
+                    while (!helper.WaitForExit(150)) {
+                        token.ThrowIfCancellationRequested();
+                        if (timer.Elapsed.TotalSeconds >= 12) {
+                            KillTree(helper);
+                            WriteLog("自动更新检查超时，继续打开工作室。");
+                            break;
+                        }
+                    }
+                    token.ThrowIfCancellationRequested();
+                } catch (OperationCanceledException) {
+                    KillTree(helper);
+                    File.Delete(request);
+                    throw;
+                } finally { activeSetupProcess = null; }
+            }
+        } catch (OperationCanceledException) { throw; }
+        catch (Exception error) { WriteLog("自动更新检查未完成：" + error.Message); }
+        return File.Exists(request);
+    }
     internal void HandoffUpdate(bool recover) {
         if (!File.Exists(BasePython)) throw new InvalidOperationException("请重新下载并解压完整安装包。");
         var info = ProcessInfo(BasePython, new[] {Path.Combine(Root, "studio_update.py"), recover ? "recover" : "run-request", "--root", Root, "--wait-pid", Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture)});
@@ -512,8 +541,12 @@ internal sealed class LauncherForm : Form {
     private async Task BeginWork(bool setup) {
         busy = true; RefreshButtons(); cancel = new CancellationTokenSource(); string errorMessage = null;
         try {
-            await Task.Run(() => { if (setup) engine.Setup(cancel.Token); server = engine.StartServer(7860, cancel.Token); });
-            OpenApp();
+            await Task.Run(() => {
+                if (setup) engine.Setup(cancel.Token);
+                if (!engine.PrepareAutomaticUpdate(cancel.Token))
+                    server = engine.StartServer(7860, cancel.Token);
+            });
+            if (server != null && !server.HasExited) OpenApp();
         } catch (OperationCanceledException) { errorMessage = "已停止，之后可以重新开始安装。"; }
         catch (Exception error) { errorMessage = error.Message; AppendLog(error.ToString()); }
         finally { busy = false; RefreshButtons(); if (errorMessage != null) { status.Text = errorMessage; showDetail.Checked = true; } }

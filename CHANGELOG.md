@@ -1,5 +1,14 @@
 # v0.4.0 — 作品历史与歌曲试听
 
+## v0.4.1 · 启动时自动更新
+
+- 打开 Windows 工作室时，启动器自动检查并安装已发布的新版。通过 SHA-256 和文件清单校验后才会替换程序文件，完成后自动打开工作室。
+- 更新在网页打开前进行。网络异常或检查超时后会继续启动，成功检查后六小时内跳过重复检查。
+- “更新与帮助”可以关闭自动更新，也可以手动更新和回退。回退后，自动更新会等到发布更高版本。
+- 已安装旧版的用户，在“更新与帮助”手动更新一次，或从发布页下载新版安装包。作品、收藏音色和模型缓存继续沿用。
+
+Windows now checks for and installs verified releases before opening the studio. Use Updates & Help to switch automatic updates off, update manually, or roll back. Install this release once from the existing updater to enable the feature.
+
 - 生成后自动保存作品，关闭程序后可从历史载入、试听和下载。
 - 歌曲支持 10 / 15 / 20 秒试听，再沿用确认片段生成整首。
 - 可选择最多 120 秒区间单独重做，新旧作品分别保留。

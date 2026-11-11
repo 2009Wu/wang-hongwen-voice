@@ -100,8 +100,49 @@ class Workflows(unittest.TestCase):
         with zipfile.ZipFile(report) as result:
             self.assertEqual(set(result.namelist()),{'diagnostics.json','说明.txt'})
             self.assertNotIn('private prompt',result.read('diagnostics.json').decode())
+    def test_automatic_update_stages_once_and_respects_settings(self):
+        latest = {'available': True, 'tag': 'v9.0.0'}
+        request = self.root / '.runtime/update-request.json'
+        with patch.object(updater, 'ROOT', self.root), \
+             patch.object(updater, 'check_update', return_value=latest) as check, \
+             patch.object(updater, 'stage_update', return_value='verified-stage') as stage:
+            updater.set_automatic_updates(False)
+            updater.prepare_automatic_update()
+            check.assert_not_called()
+            updater.set_automatic_updates(True)
+            updater.prepare_automatic_update()
+            self.assertEqual(paths.read_json(request), {'kind': 'apply', 'stage': 'verified-stage'})
+            stage.assert_called_once_with(latest=latest, timeout=5)
+            request.unlink()
+            updater.prepare_automatic_update()
+            check.assert_called_once()
+            updater.set_automatic_updates(True)
+            paths.atomic_json(self.root / '.runtime/updates/automatic.json', {'skip_through': '9.0.0'})
+            updater.prepare_automatic_update()
+            self.assertFalse(request.exists())
+            self.assertEqual(stage.call_count, 1)
+
+    def test_automatic_update_download_failure_leaves_no_request(self):
+        with patch.object(updater, 'ROOT', self.root), \
+             patch.object(updater, 'check_update', side_effect=TimeoutError('offline')) as check:
+            updater.prepare_automatic_update()
+            updater.prepare_automatic_update()
+        self.assertFalse((self.root / '.runtime/update-request.json').exists())
+        check.assert_called_once()
+
+    def test_rollback_skips_the_reverted_release_for_automatic_updates(self):
+        stage = self.staged()
+        backup = updater.apply_stage(stage, self.root)
+        request = self.root / '.runtime/update-request.json'
+        paths.atomic_json(request, {'kind': 'rollback', 'backup': str(backup)})
+        with patch.object(updater.subprocess, 'Popen'):
+            updater.run_request(self.root, 0)
+        settings = updater.automatic_update_settings(self.root)
+        self.assertEqual(settings['skip_through'], paths.PRODUCT['version'])
+        self.assertFalse(request.exists())
+
     def test_tamper_and_unsafe_names_rejected(self):
-        for index,name in enumerate(['../outside','.runtime/ready.json','A/../bad','NUL.txt','x\\y','a:b','x.']):
+        for index,name in enumerate(['../outside','.runtime/ready.json','.RUNTIME/ready.json','A/../bad','NUL.txt','x\\y','a:b','x.']):
             package=self.bundle(self.root/f'bad{index}.zip',{'app.py':b'x',paths.PRODUCT['launcher']:b'MZ',name:b'evil'})
             with self.assertRaises(ValueError):updater.unpack_bundle(package,self.root/f'bad{index}')
         package=self.bundle(self.root/'extra.zip',extra=('not-in-manifest',b'evil'))

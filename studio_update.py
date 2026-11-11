@@ -1,38 +1,91 @@
-"""Explicit, checksum-verified portable updates with a recoverable code backup."""
+"""Checksum-verified portable updates with a recoverable code backup."""
 from __future__ import annotations
 import argparse,hashlib,json,os,re,shutil,subprocess,time,urllib.request,uuid,zipfile
 from pathlib import Path,PurePosixPath
-from studio_paths import ROOT,PRODUCT,atomic_json,read_json,owned_path,sha256
+from studio_paths import ROOT,PRODUCT,atomic_json,read_json,owned_path,sha256,file_lock
 
 ALLOWED={'2009Wu/custom-voice-studio','2009Wu/wang-hongwen-voice'}
 LIMIT=30*1024**2
+AUTO_CHECK_INTERVAL = 6 * 60 * 60
+
+def automatic_update_settings(root=None):
+    path = (root or ROOT) / '.runtime/updates/automatic.json'
+    settings = read_json(path)
+    return settings if isinstance(settings, dict) else {}
+
+def automatic_updates_enabled():
+    return automatic_update_settings().get('enabled', True) is not False
+
+def set_automatic_updates(enabled):
+    settings = automatic_update_settings()
+    settings['enabled'] = bool(enabled)
+    if enabled:
+        settings.pop('last_check', None)
+    atomic_json(ROOT / '.runtime/updates/automatic.json', settings)
+
+def prepare_automatic_update():
+    # The desktop launcher calls this before starting the browser server.
+    request_path = ROOT / '.runtime/update-request.json'
+    if request_path.exists():
+        return
+    settings = automatic_update_settings()
+    if settings.get('enabled', True) is False:
+        return
+    now = time.time()
+    last_check = settings.get('last_check')
+    if isinstance(last_check, (int, float)) and 0 <= now - last_check < AUTO_CHECK_INTERVAL:
+        return
+
+    # Record the attempt before networking, so a failed update cannot restart in a loop.
+    settings['last_check'] = now
+    atomic_json(ROOT / '.runtime/updates/automatic.json', settings)
+    try:
+        latest = check_update(timeout=5)
+        if not latest['available']:
+            return
+        skipped = settings.get('skip_through')
+        if skipped and version(latest['tag']) <= version(skipped):
+            return
+        stage = stage_update(latest=latest, timeout=5)
+        atomic_json(request_path, {'kind': 'apply', 'stage': stage})
+    except Exception as error:
+        # Retry a transient download on the next launch, with a short cooldown.
+        settings['last_check'] = now - AUTO_CHECK_INTERVAL + 30 * 60
+        atomic_json(ROOT / '.runtime/updates/automatic.json', settings)
+        print('自动更新检查未完成：' + str(error)[:250], flush=True)
+
 
 def version(value):
     match=re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)',str(value))
     if not match:raise ValueError('更新版本号无效。')
     return tuple(map(int,match.groups()))
 
-def download(url,limit=LIMIT):
+def download(url,limit=LIMIT,timeout=30):
     from urllib.parse import urlparse
     parsed=urlparse(url)
     if parsed.scheme!='https' or parsed.hostname not in {'api.github.com','github.com','raw.githubusercontent.com','release-assets.githubusercontent.com','objects.githubusercontent.com'}:
         raise ValueError('更新下载地址不受支持。')
     request=urllib.request.Request(url,headers={'User-Agent':'VoiceStudios-Updater','Accept':'application/vnd.github+json' if parsed.hostname=='api.github.com' else '*/*'})
-    with urllib.request.urlopen(request,timeout=30) as response:
+    with urllib.request.urlopen(request,timeout=timeout) as response:
         final=urlparse(response.geturl())
         if final.scheme!='https' or final.hostname not in {'api.github.com','github.com','raw.githubusercontent.com','release-assets.githubusercontent.com','objects.githubusercontent.com'}:raise ValueError('更新下载重定向地址不受支持。')
         data=response.read(limit+1)
     if len(data)>limit:raise ValueError('更新文件超出了预期大小。')
     return data
 
-def check_update():
+def check_update(timeout=30):
     repo=PRODUCT['repository']
     if repo not in ALLOWED:raise ValueError('项目更新来源无效。')
-    release=json.loads(download(f'https://api.github.com/repos/{repo}/releases/latest',2*1024**2))
+    release=json.loads(download(f'https://api.github.com/repos/{repo}/releases/latest',2*1024**2,timeout=timeout))
     tag=release['tag_name'];available=version(tag)>version(PRODUCT['version'])
     assets={a['name']:a['browser_download_url'] for a in release.get('assets',[])}
     if available and any(name not in assets for name in [PRODUCT['asset'],PRODUCT['asset']+'.sha256']):
         raise ValueError('新版安装包或校验文件尚未发布完整，请稍后重试。')
+    if available:
+        release_prefix = f'https://github.com/{repo}/releases/download/{tag}/'
+        for name in (PRODUCT['asset'], PRODUCT['asset'] + '.sha256'):
+            if assets[name] != release_prefix + name:
+                raise ValueError('更新附件不属于当前项目的发布版本。')
     result={'tag':tag,'available':available,'assets':assets,'checked':time.time()}
     atomic_json(ROOT/'.runtime/updates/latest.json',result)
     return result
@@ -41,14 +94,17 @@ def bundle_path(root,name):
     if '\\' in name or ':' in name:raise ValueError('安装包包含不安全的文件名。')
     parts=name.split('/')
     if any(p.rstrip(' .')!=p or not p or re.match(r'(?i)^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)',p) for p in parts):raise ValueError('安装包包含无效的 Windows 文件名。')
-    if not parts or name.startswith('/') or any(p in {'.','..','.runtime','.cache','.git'} for p in parts):
+    if not parts or name.startswith('/') or any(p.casefold() in {'.','..','.runtime','.cache','.git'} for p in parts):
         raise ValueError('安装包不能覆盖缓存、设置或外部文件。')
     return owned_path(root,Path(*parts))
 
 def unpack_bundle(archive,destination):
     destination=Path(destination);destination.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(archive) as bundle:
-        meta=json.loads(bundle.read('release-manifest.json'))
+        manifest = bundle.getinfo('release-manifest.json')
+        if manifest.file_size > 2 * 1024**2:
+            raise ValueError('更新清单大小异常。')
+        meta=json.loads(bundle.read(manifest))
         if meta['product']!=PRODUCT['id']:raise ValueError('安装包属于另一个工作室。')
         version(meta['version'])
         expected=meta['files'];names=[e.filename for e in bundle.infolist() if not e.is_dir()]
@@ -68,12 +124,13 @@ def unpack_bundle(archive,destination):
             target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
     return meta
 
-def stage_update():
-    latest=check_update()
+def stage_update(latest=None, timeout=30):
+    if latest is None:
+        latest=check_update(timeout=timeout)
     if not latest['available']:return None
     folder=ROOT/'.runtime/updates/staged'/uuid.uuid4().hex;folder.mkdir(parents=True)
-    url=latest['assets'][PRODUCT['asset']];data=download(url)
-    checksum=download(latest['assets'][PRODUCT['asset']+'.sha256'],4096).decode('utf-8-sig').split()[0].lower()
+    url=latest['assets'][PRODUCT['asset']];data=download(url,timeout=timeout)
+    checksum=download(latest['assets'][PRODUCT['asset']+'.sha256'],4096,timeout=timeout).decode('utf-8-sig').split()[0].lower()
     if not re.fullmatch('[0-9a-f]{64}',checksum) or hashlib.sha256(data).hexdigest()!=checksum:raise ValueError('更新包校验失败，当前版本没有改动，请重试下载。')
     archive=folder/'update.zip';archive.write_bytes(data)
     meta=unpack_bundle(archive,folder/'bundle')
@@ -183,7 +240,17 @@ def run_request(root,wait_pid,recover=False):
     while process_exists(wait_pid):
         if time.monotonic()>deadline:raise TimeoutError('启动器未能退出，更新尚未安装。')
         time.sleep(.2)
-    request_path=root/'.runtime/update-request.json'
+    with file_lock(root / '.runtime/updates/apply.lock'):
+        handled = finish_request(root, recover)
+    launcher = root / PRODUCT['launcher']
+    if handled and launcher.is_file():
+        subprocess.Popen([str(launcher), '--open'], cwd=root)
+
+def finish_request(root, recover):
+    request_path = root / '.runtime/update-request.json'
+    transaction_path = root / '.runtime/update-transaction.json'
+    if not (transaction_path if recover else request_path).exists():
+        return False
     try:
         if recover:
             transaction=read_json(root/'.runtime/update-transaction.json')
@@ -193,15 +260,27 @@ def run_request(root,wait_pid,recover=False):
             request=read_json(request_path)
             if not request:raise ValueError('没有待处理的更新请求。')
             if request['kind']=='apply':apply_stage(request['stage'],root);message='更新已安装。'
-            elif request['kind']=='rollback':restore_backup(request['backup'],root);message='已回退到上一个版本。'
+            elif request['kind']=='rollback':
+                settings = automatic_update_settings(root)
+                skipped = settings.get('skip_through', PRODUCT['version'])
+                settings['skip_through'] = max(skipped, PRODUCT['version'], key=version)
+                atomic_json(root / '.runtime/updates/automatic.json', settings)
+                restore_backup(request['backup'],root)
+                message='已回退到上一个版本。自动更新会等待更高版本。'
             else:raise ValueError('未知更新操作。')
         atomic_json(root/'.runtime/update-result.json',{'ok':True,'message':message})
     except Exception as error:
         atomic_json(root/'.runtime/update-result.json',{'ok':False,'message':'更新未完成：'+str(error)[:300]})
     finally:request_path.unlink(missing_ok=True)
-    launcher=root/PRODUCT['launcher']
-    if launcher.is_file():subprocess.Popen([str(launcher),'--open'],cwd=root)
+    return not transaction_path.exists()
 
-if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('command',choices=['run-request','recover']);parser.add_argument('--root',type=Path,required=True);parser.add_argument('--wait-pid',type=int,required=True)
-    args=parser.parse_args();run_request(args.root,args.wait_pid,args.command=='recover')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('command', choices=['run-request', 'recover', 'prepare-automatic'])
+    parser.add_argument('--root', type=Path, default=ROOT)
+    parser.add_argument('--wait-pid', type=int, default=0)
+    args = parser.parse_args()
+    if args.command == 'prepare-automatic':
+        prepare_automatic_update()
+    else:
+        run_request(args.root, args.wait_pid, args.command == 'recover')
