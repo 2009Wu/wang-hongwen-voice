@@ -88,4 +88,4 @@ Hugging Face 是免费项目介绍、试听和下载入口；生成在下载程�
 
 **所有输出均为 AI 合成演绎，并非王洪文真实录音或演唱。分享时请保留 AI 标注。**
 
-[支持项目](https://ko-fi.com/little_wang)
+[给小王买杯咖啡](https://ko-fi.com/little_wang)

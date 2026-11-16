@@ -19,6 +19,46 @@ CSS = """
 .panel-title { margin-top: 6px !important; }
 footer { display: none !important; }
 """
+CSS += """
+#support-project {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 10.75rem;
+    min-height: 2.875rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid #d49c44;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #fff0ce, #f7cc78);
+    color: #422705;
+    box-shadow: 0 2px 7px #75450926;
+    font-weight: 650;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+#support-project::before {
+    content: "☕" / "";
+    font-size: 1.15em;
+}
+@media (hover: hover) {
+    #support-project:hover {
+        background: #ffda8e;
+        box-shadow: 0 4px 12px #7545093d;
+        color: #422705;
+        transform: translateY(-1px);
+    }
+}
+#support-project:focus-visible {
+    outline: 3px solid #a36311;
+    outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+    #support-project { transition: none; }
+    #support-project:hover { transform: none; }
+}
+"""
 
 
 def singing(upload, vocal_db, music_db, quality, video, progress=gr.Progress()):

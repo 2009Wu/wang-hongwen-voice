@@ -46,7 +46,12 @@ def build_app(api):
         except Exception as error:raise gr.Error(str(error)) from error
 
     with gr.Blocks(title=PRODUCT['name'],delete_cache=(600,3600)) as demo:
-        gr.Markdown('# '+PRODUCT['name']+'\n'+('上传参考人声，再输入文字或放入歌曲。' if custom else '输入文字，或放入有原唱的音频／视频。')+'生成后会自动保存作品。')
+        with gr.Row(equal_height=False):
+            with gr.Column(min_width=240):
+                gr.Markdown('# '+PRODUCT['name']+'\n'+('上传参考人声，再输入文字或放入歌曲。' if custom else '输入文字，或放入有原唱的音频／视频。')+'生成后会自动保存作品。')
+            gr.Button('给小王买杯咖啡', link='https://ko-fi.com/little_wang',
+                      link_target='_blank', size='lg', scale=0, min_width=156,
+                      elem_id='support-project')
         with gr.Tab('生成作品'):
             with gr.Row(equal_height=False):
                 with gr.Column(scale=6):
