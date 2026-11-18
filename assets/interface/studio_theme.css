@@ -202,7 +202,10 @@ gradio-app[dir="rtl"] .gradio-container {
     border-radius: 14px;
     background: var(--studio-paper);
 }
-#studio-new-release button { align-self: flex-start; width: max-content; max-width: 100%; }
+#studio-update-actions { align-items: center; gap: .7rem 1rem; }
+#studio-update-actions #studio-install-update { flex: 0 0 auto; min-height: 44px; max-width: 100%; }
+#studio-update-status { flex: 1 1 15rem; }
+#studio-update-status p { margin-block: 0; }
 .studio-release-notes { overflow-wrap: anywhere; overflow: auto; max-height: 20rem; color: var(--studio-ink); }
 .studio-release-notes p { white-space: pre-wrap; margin-block: .45rem 0; }
 #studio-update-toast {

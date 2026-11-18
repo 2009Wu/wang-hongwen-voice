@@ -130,13 +130,15 @@ def build_app(api):
                     redo_start=gr.Number(value=0,minimum=0,label=tr('重做起点（秒）'));redo_end=gr.Number(value=10,minimum=0,label=tr('重做终点（秒）'))
                 redo=gr.Button(tr('只重做这个区间（最多 120 秒）'))
                 retry=gr.Button(tr('重试所选任务'));history_full=gr.Button(tr('用所选试听生成整首'))
-            with gr.Tab(tr('更新与帮助'), id='studio-help'):
+            with gr.Tab(tr('更新与帮助'), id='studio-help') as help_tab:
                 gr.Markdown(I18N('studio_version'), elem_id='studio-current-version')
+                with gr.Row(elem_id='studio-update-actions'):
+                    install = gr.Button(tr('安装更新并重启'), variant='primary',
+                                        interactive=False, elem_id='studio-install-update')
+                    update_info = gr.Markdown(tr('正在检查更新…'), elem_id='studio-update-status')
                 with gr.Column(visible=False, elem_id='studio-new-release') as release:
                     gr.Markdown(tr('新版更新内容'))
                     notes = gr.HTML()
-                    install = gr.Button(tr('安装更新并重启'), variant='primary', visible=False)
-                update_info = gr.Markdown(tr('正在检查更新…'), elem_id='studio-update-status')
                 gr.Markdown(I18N('studio_about'))
                 diagnose=gr.Button(tr('导出诊断报告'));report=gr.File(label=tr('诊断报告（不含录音、输入文字和作品）'),interactive=False)
                 gr.Markdown(tr('显存不足：关闭其他显卡程序，选择“6 GB 节省显存”。下载失败：检查网络后重试，保留已有缓存。无法启动：在启动器点击“修复安装”。'))
@@ -145,7 +147,9 @@ def build_app(api):
             toast_version = gr.Markdown()
             toast_status = gr.Markdown(visible=False)
             with gr.Row():
-                toast_install = gr.Button(tr('安装更新并重启'), variant='primary', min_width=144, visible=False)
+                toast_install = gr.Button(tr('安装更新并重启'), variant='primary',
+                                          min_width=144, interactive=False,
+                                          elem_id='studio-toast-install-update')
                 toast_dismiss = gr.Button(tr('关闭提醒'), size='sm', scale=0, min_width=72)
         gr.Markdown(tr('所有输出均为 AI 合成，不能作为本人真实录音。'), elem_id='studio-footnote')
         outputs=[audio,mp3,flac,wav,movie,details,used,transcript,status,history,current]
@@ -238,9 +242,16 @@ def build_app(api):
             else:
                 status = ''
             ready = bool(result and result['available'])
-            button = gr.update(visible=ready and can_install)
+            in_progress = UPDATE_LOCK.locked() or (ROOT / '.runtime/update-request.json').exists()
+            button = gr.update(interactive=ready and can_install and not in_progress)
+            toast_hint = gr.skip()
+            if ready and not can_install:
+                toast_hint = gr.update(value=tr('请从桌面快捷方式打开以安装。'), visible=True)
+            if in_progress:
+                status = gr.skip()
             return (result, gr.update(visible=ready), release_notes(result) if ready else '',
-                    status, gr.update(visible=ready), result['tag'] if ready else '', button, button)
+                    status, gr.update(visible=ready), result['tag'] if ready else '',
+                    button, button, toast_hint)
 
         def install_release(latest):
             if not can_install or not latest or not latest.get('available'):
@@ -264,9 +275,10 @@ def build_app(api):
             finally:
                 UPDATE_LOCK.release()
 
-        demo.load(check_release, outputs=[latest_release, release, notes, update_info, update_toast,
-                                         toast_version, install, toast_install],
-                  queue=False, show_progress='hidden', api_name=False)
+        check_outputs = [latest_release, release, notes, update_info, update_toast,
+                         toast_version, install, toast_install, toast_status]
+        demo.load(check_release, outputs=check_outputs, queue=False, show_progress='hidden', api_name=False)
+        help_tab.select(check_release, outputs=check_outputs, queue=False, show_progress='hidden', api_name=False)
         gr.on([install.click, toast_install.click], install_release, inputs=latest_release,
               outputs=[install, toast_install, update_info, toast_status],
               concurrency_limit=1, show_progress='hidden', api_name=False)

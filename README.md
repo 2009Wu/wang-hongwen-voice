@@ -8,7 +8,7 @@
 
 **[下载 Windows 版](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** · [全部版本](https://github.com/2009Wu/wang-hongwen-voice/releases) · [Hugging Face 项目和试听](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)
 
-当前 Windows 版 **v0.5.2**。[版本说明](docs/releases/v0.5.2.md)
+当前 Windows 版 **v0.5.3**。[版本说明](docs/releases/v0.5.3.md)
 
 双击桌面图标进入工作室。安装界面在工作室打开后会自动收起，关闭工作室会结束后台服务。
 
@@ -18,7 +18,7 @@
 
 ## 作品、试听和更新
 
-启动时自动检查更新。有新版时，右下角会提醒，版本下方也会显示更新内容。点击「安装更新并重启」即可完成升级。
+启动时自动检查更新。有新版时，右下角会提醒，版本下方也会显示更新内容。在「更新与帮助」的版本下方或右下角提醒里，点击「安装更新并重启」即可完成升级。
 
 生成后自动保存到“文档”，可在作品历史中找回。歌曲可先试听 10–20 秒，满意后沿用试听生成整首；不满意的区间可单独重做，原作品另行保留。
 
