@@ -8,7 +8,7 @@
 
 **[下载 Windows 版](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** · [全部版本](https://github.com/2009Wu/wang-hongwen-voice/releases) · [Hugging Face 项目和试听](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)
 
-当前 Windows 版 **v0.5.5**。[版本说明](docs/releases/v0.5.5.md)
+当前 Windows 版 **v0.5.6**。[版本说明](docs/releases/v0.5.6.md)
 
 安装更新后，缺少的桌面快捷方式会自动补建。已有快捷方式会沿用，图标变更时会更新原图标。
 
@@ -101,3 +101,12 @@ Hugging Face 是免费项目介绍、试听和下载入口；生成在下载程�
 **所有输出均为 AI 合成演绎，并非王洪文真实录音或演唱。分享时请保留 AI 标注。**
 
 [给小王买杯咖啡](https://ko-fi.com/little_wang)
+
+
+## 可选的匿名使用统计
+
+首次安装不会启用统计。愿意帮助改进时，可通过安装文件夹中的
+`Analytics Preferences.cmd` 自行选择开启或关闭。统计包括生成次数、
+首次导出格式、A/B 采用情况和粗略生成参数。若另外开启公开歌曲统计，只发送
+已登记的公开歌曲编号。音频、文件名、输入文字、参考人声、账号和设备编号
+不会发送。后台数据保留 90 天。

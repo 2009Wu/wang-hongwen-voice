@@ -66,6 +66,9 @@ def archive(request, result, job, failure=None):
     atomic_json(workspace/'state.json',{'created':record['created'],'mode':record['mode'],'preview':record['preview']})
     atomic_json(HISTORY/(identifier+'.json'),record)
     prune_workspaces(exclude=identifier)
+    if not failure and not record['preview']:
+        from studio_analytics import record_usage
+        record_usage('generated', identifier)
     return result if not failure else record
 
 def workspace_for(identifier):

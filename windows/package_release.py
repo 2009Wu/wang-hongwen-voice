@@ -13,6 +13,11 @@ import re
 import zipfile
 
 ROOT_FILES = {
+    'analytics_schema.py',
+    'studio_analytics.py',
+    'configure_analytics.py',
+    'Analytics Preferences.cmd',
+    'studio_editor.py',
     'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'WebView2Loader.dll',
     'studio_ui.py','studio_presentation.py','studio_paths.py','studio_library.py','studio_song.py','studio_actions.py',
     'studio_update.py','studio_diagnostics.py','studio-version.json',
@@ -38,6 +43,8 @@ REQUIRED = ROOT_FILES | {
 def build(root: Path, output_dir: Path) -> dict:
     root, output_dir = root.resolve(), output_dir.resolve()
     files = [root / name for name in ROOT_FILES]
+    files.extend(root / name for name in ('analytics-defaults.json', 'analytics-song-matches.json')
+                 if (root / name).is_file())
     for directory in DIRECTORIES:
         files.extend((root / directory).rglob('*'))
     selected = {}

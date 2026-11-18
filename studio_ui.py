@@ -9,7 +9,8 @@ from studio_library import (history_choices,get_record,retry_request,redo_reques
     voice_choices,save_voice,load_voice,delete_voice,open_exports)
 from runner import GPU_LOCK, run_job
 from studio_update import check_on_open, stage_update, request_update
-from studio_presentation import ACCENT, I18N, LOCALE_CONTROL, portrait, tr
+from studio_presentation import ACCENT, I18N, INTERFACE, LOCALE_CONTROL, portrait, tr
+from studio_editor import editable_markup
 
 MEDIA=['.mp3','.mp4','.wav','.m4a','.flac','.ogg','.webm','.mov','.aac','.mkv']
 
@@ -33,10 +34,16 @@ def prepare_clip(source,start=0,seconds=20,exact=False):
         raise ValueError('无法读取参考声音，请检查素材或在启动器修复安装。')
     return json.loads(done.stdout.strip().splitlines()[-1])
 
-def result_values(result,message):
-    return (result.get('audio'),result.get('audio'),result.get('flac'),result.get('wav'),
-        result.get('video'),result.get('details'),result.get('reference'),result.get('reference_text',''),
-        message,gr.update(choices=history_choices(),value=result.get('history_id')),result.get('history_id'))
+def result_values(result, message):
+    try:
+        markup = editable_markup(result)
+    except (OSError, ValueError, RuntimeError):
+        markup = ''
+    return (result.get('audio'), result.get('audio'), result.get('flac'), result.get('wav'),
+        result.get('video'), result.get('details'), result.get('reference'), result.get('reference_text', ''),
+        message, gr.update(choices=history_choices(), value=result.get('history_id')), result.get('history_id'),
+        gr.update(visible=bool(markup)), markup, None, gr.update(interactive=False))
+
 
 def upload_field(label, identifier, height):
     with gr.Column(min_width=0, elem_classes=['studio-upload-field'], elem_id=identifier):
@@ -60,13 +67,14 @@ def release_notes(latest):
 
 
 def build_app(api):
+    from studio_analytics import record_usage
     custom=PRODUCT['id']=='custom-voice-studio'
     def work(request,progress):
         try:
             for fraction,message,result in run_job(request):
                 progress(fraction,desc=message)
                 if result:yield result_values(result,message+'\n保存位置：'+str(Path(result['audio']).parent))
-                else:yield *(gr.skip() for _ in range(8)),message,gr.skip(),gr.skip()
+                else:yield *(gr.skip() for _ in range(8)), message, *(gr.skip() for _ in range(6))
         except Exception as error:raise gr.Error(str(error)) from error
 
     with gr.Blocks(title=PRODUCT['name'], fill_width=True, delete_cache=(600,3600)) as demo:
@@ -120,6 +128,16 @@ def build_app(api):
                             wav=gr.DownloadButton(tr('下载 WAV'));movie=gr.DownloadButton(tr('下载 MP4'));details=gr.DownloadButton(tr('生成参数'))
                             used=gr.Audio(label=tr('实际使用的参考声音'),type='filepath',interactive=False)
                             transcript=gr.Textbox(label=tr('参考原话'),interactive=False)
+                        with gr.Accordion(tr('波形选段与 A/B 试听'), open=True,
+                                          visible=False, elem_id='studio-refine-panel') as refine_panel:
+                            editor = gr.HTML('', elem_id='studio-refine-editor',
+                                             js_on_load=(INTERFACE / 'studio_editor.js').read_text(encoding='utf-8'))
+                            edit_start = gr.Number(visible=False)
+                            edit_end = gr.Number(visible=False)
+                            with gr.Row():
+                                redo_selection = gr.Button(tr('重做选中片段'), variant='primary')
+                                accept_b = gr.Button(tr('采用 B 版'), interactive=False)
+                            comparison = gr.State(None)
                         folder=gr.Button(tr('打开作品文件夹'))
                         current=gr.State(None)
             with gr.Tab(tr('作品历史'), id='studio-history'):
@@ -152,8 +170,18 @@ def build_app(api):
                                           elem_id='studio-toast-install-update')
                 toast_dismiss = gr.Button(tr('关闭提醒'), size='sm', scale=0, min_width=72)
         gr.Markdown(tr('所有输出均为 AI 合成，不能作为本人真实录音。'), elem_id='studio-footnote')
-        outputs=[audio,mp3,flac,wav,movie,details,used,transcript,status,history,current]
+        outputs = [audio, mp3, flac, wav, movie, details, used, transcript, status, history, current,
+                   refine_panel, editor, comparison, accept_b]
         inputs=[reference,selected_ref,text,song,performance,steps,vocals,music,video,language,ref_start,ref_seconds,ref_text,ref_lang,clip_start,clip_seconds]
+
+        def track_download(output_format):
+            def track(identifier):
+                record_usage('download', identifier, output_format)
+            return track
+
+        for button, output_format in ((mp3, 'mp3'), (flac, 'flac'), (wav, 'wav'), (movie, 'mp4')):
+            button.click(track_download(output_format), inputs=current, api_name=False,
+                         queue=False, show_progress='hidden')
         def make(values,is_preview):
             reference,selected,text,song,performance,steps,vocals,music,video,language,rs,rl,rt,lang,cs,cl=values
             if custom:
@@ -189,14 +217,51 @@ def build_app(api):
                 (approved,full,[current],False),(history_full,full,[history],False),
                 (redo,replace,[history,redo_start,redo_end],'redo'),(retry,repeat,[history],False)]:
             events.append(button.click(fn,args,outputs,api_name=name,concurrency_limit=1,concurrency_id='gpu'))
+        def refine(identifier, start, end, progress=gr.Progress()):
+            try:
+                request = redo_request(identifier, start, end)
+                original = get_record(identifier)['result']
+                selection = (float(start), float(end))
+                yield editable_markup(original, selection=selection), None, gr.update(interactive=False), '正在重做选中片段…'
+                for fraction, message, result in run_job(request):
+                    progress(fraction, desc=message)
+                    if result:
+                        yield (editable_markup(original, result, selection), (identifier, result['history_id']),
+                               gr.update(interactive=True), '重做完成。试听 A 和 B，满意后点击「采用 B 版」。')
+                    else:
+                        yield gr.skip(), gr.skip(), gr.skip(), message
+            except Exception as error:
+                raise gr.Error(str(error)) from error
+
+        events.append(redo_selection.click(
+            refine, [current, edit_start, edit_end], [editor, comparison, accept_b, status],
+            js="""(id) => {
+                const panel = document.querySelector('#studio-refine-editor');
+                return [id, panel.querySelector('[data-range=start]').valueAsNumber,
+                            panel.querySelector('[data-range=end]').valueAsNumber];
+            }""", concurrency_limit=1, concurrency_id='gpu', api_name=False))
+
+        def apply_comparison(identifier, candidate):
+            if not candidate or candidate[0] != identifier:
+                raise gr.Error('当前作品已切换，请重新选择要精修的片段。')
+            record = get_record(candidate[1])
+            if record.get('parent') != identifier or record.get('status') != 'completed':
+                raise gr.Error('重做版暂时无法载入。')
+            record_usage('adopt_b', record['id'])
+            return result_values(record['result'], '已采用 B 版：' + record['directory'])
+
+        accept_b.click(apply_comparison, [current, comparison], outputs, concurrency_limit=1,
+                       concurrency_id='gpu', api_name=False)
         stop.click(lambda:'已停止，已完成的作品仍然保留。',outputs=status,cancels=events,queue=False,api_name=False)
         def load_history(identifier):
             try:
                 record=get_record(identifier)
-                if record['status']=='failed':return *(gr.skip() for _ in range(8)),record['error'],gr.skip(),identifier
+                if record['status'] == 'failed':
+                    return (*(gr.skip() for _ in range(8)), record['error'], gr.skip(), identifier,
+                            gr.update(visible=False), '', None, gr.update(interactive=False))
                 return result_values(record['result'],'已载入：'+record['directory'])
             except Exception as error:raise gr.Error(str(error)) from error
-        load.click(load_history,[history],outputs,api_name=False)
+        load.click(load_history, [history], outputs, concurrency_id='gpu', api_name=False)
         refresh.click(lambda:gr.update(choices=history_choices()),outputs=history,api_name=False)
         folder.click(lambda identifier:'作品目录：'+open_exports(identifier),[current],status,api_name=False)
         if custom:

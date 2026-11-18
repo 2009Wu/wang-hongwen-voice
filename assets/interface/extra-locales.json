@@ -106,7 +106,10 @@
     "You’re up to date.": "आपके पास नवीनतम संस्करण है।",
     "Open the desktop app to install.": "इंस्टॉल करने के लिए डेस्कटॉप ऐप खोलें।",
     "Downloading and verifying…": "डाउनलोड और सत्यापन जारी…",
-    "Installing. The app will restart…": "इंस्टॉल हो रहा है। ऐप फिर खुलेगा…"
+    "Installing. The app will restart…": "इंस्टॉल हो रहा है। ऐप फिर खुलेगा…",
+    "Waveform editing and A/B audition": "वेवफ़ॉर्म संपादन और A/B पूर्वावलोकन",
+    "Redo selection": "चयन फिर बनाएँ",
+    "Use version B": "संस्करण B अपनाएँ"
   },
   "es": {
     "Create": "Crear",
@@ -215,7 +218,10 @@
     "You’re up to date.": "Ya tienes la última versión.",
     "Open the desktop app to install.": "Abre la aplicación de escritorio para instalar.",
     "Downloading and verifying…": "Descargando y verificando…",
-    "Installing. The app will restart…": "Instalando. La aplicación se reiniciará…"
+    "Installing. The app will restart…": "Instalando. La aplicación se reiniciará…",
+    "Waveform editing and A/B audition": "Edición de onda y escucha A/B",
+    "Redo selection": "Rehacer el fragmento",
+    "Use version B": "Usar la versión B"
   },
   "ar": {
     "Create": "إنشاء",
@@ -324,7 +330,10 @@
     "You’re up to date.": "لديك أحدث إصدار.",
     "Open the desktop app to install.": "افتح تطبيق سطح المكتب للتثبيت.",
     "Downloading and verifying…": "جارٍ التنزيل والتحقق…",
-    "Installing. The app will restart…": "جارٍ التثبيت. سيُعاد تشغيل التطبيق…"
+    "Installing. The app will restart…": "جارٍ التثبيت. سيُعاد تشغيل التطبيق…",
+    "Waveform editing and A/B audition": "تحرير الموجة والاستماع A/B",
+    "Redo selection": "إعادة توليد المقطع",
+    "Use version B": "اعتماد النسخة B"
   },
   "fr": {
     "Create": "Créer",
@@ -433,7 +442,10 @@
     "You’re up to date.": "Vous avez la dernière version.",
     "Open the desktop app to install.": "Ouvrez l’application de bureau pour installer.",
     "Downloading and verifying…": "Téléchargement et vérification…",
-    "Installing. The app will restart…": "Installation. L’application va redémarrer…"
+    "Installing. The app will restart…": "Installation. L’application va redémarrer…",
+    "Waveform editing and A/B audition": "Édition de la forme d’onde et écoute A/B",
+    "Redo selection": "Refaire la sélection",
+    "Use version B": "Utiliser la version B"
   },
   "bn": {
     "Create": "তৈরি করুন",
@@ -542,7 +554,10 @@
     "You’re up to date.": "আপনার কাছে সর্বশেষ সংস্করণ আছে।",
     "Open the desktop app to install.": "ইনস্টল করতে ডেস্কটপ অ্যাপ খুলুন।",
     "Downloading and verifying…": "ডাউনলোড ও যাচাই চলছে…",
-    "Installing. The app will restart…": "ইনস্টল হচ্ছে। অ্যাপটি আবার চালু হবে…"
+    "Installing. The app will restart…": "ইনস্টল হচ্ছে। অ্যাপটি আবার চালু হবে…",
+    "Waveform editing and A/B audition": "তরঙ্গরূপ সম্পাদনা ও A/B তুলনা",
+    "Redo selection": "নির্বাচিত অংশ আবার তৈরি করুন",
+    "Use version B": "সংস্করণ B ব্যবহার করুন"
   },
   "pt": {
     "Create": "Criar",
@@ -651,7 +666,10 @@
     "You’re up to date.": "Você está na versão mais recente.",
     "Open the desktop app to install.": "Abra o aplicativo de desktop para instalar.",
     "Downloading and verifying…": "Baixando e verificando…",
-    "Installing. The app will restart…": "Instalando. O aplicativo será reiniciado…"
+    "Installing. The app will restart…": "Instalando. O aplicativo será reiniciado…",
+    "Waveform editing and A/B audition": "Edição da onda e prévia A/B",
+    "Redo selection": "Refazer o trecho",
+    "Use version B": "Usar a versão B"
   },
   "id": {
     "Create": "Buat",
@@ -760,7 +778,10 @@
     "You’re up to date.": "Anda menggunakan versi terbaru.",
     "Open the desktop app to install.": "Buka aplikasi desktop untuk memasang.",
     "Downloading and verifying…": "Mengunduh dan memverifikasi…",
-    "Installing. The app will restart…": "Memasang. Aplikasi akan dimulai ulang…"
+    "Installing. The app will restart…": "Memasang. Aplikasi akan dimulai ulang…",
+    "Waveform editing and A/B audition": "Edit gelombang dan dengarkan A/B",
+    "Redo selection": "Buat ulang bagian terpilih",
+    "Use version B": "Pakai versi B"
   },
   "ur": {
     "Create": "بنائیں",
@@ -869,7 +890,10 @@
     "You’re up to date.": "آپ کے پاس تازہ ترین ورژن ہے۔",
     "Open the desktop app to install.": "انسٹال کرنے کے لیے ڈیسک ٹاپ ایپ کھولیں۔",
     "Downloading and verifying…": "ڈاؤن لوڈ اور تصدیق جاری ہے…",
-    "Installing. The app will restart…": "انسٹال ہو رہا ہے۔ ایپ دوبارہ کھلے گی…"
+    "Installing. The app will restart…": "انسٹال ہو رہا ہے۔ ایپ دوبارہ کھلے گی…",
+    "Waveform editing and A/B audition": "ویوفارم میں ترمیم اور A/B سماعت",
+    "Redo selection": "منتخب حصہ دوبارہ بنائیں",
+    "Use version B": "ورژن B استعمال کریں"
   },
   "ru": {
     "Create": "Создание",
@@ -978,7 +1002,10 @@
     "You’re up to date.": "У вас последняя версия.",
     "Open the desktop app to install.": "Для установки откройте приложение на компьютере.",
     "Downloading and verifying…": "Загрузка и проверка…",
-    "Installing. The app will restart…": "Установка. Приложение перезапустится…"
+    "Installing. The app will restart…": "Установка. Приложение перезапустится…",
+    "Waveform editing and A/B audition": "Монтаж по волне и сравнение A/B",
+    "Redo selection": "Переделать выделение",
+    "Use version B": "Использовать версию B"
   },
   "de": {
     "Create": "Erstellen",
@@ -1087,7 +1114,10 @@
     "You’re up to date.": "Du hast die neueste Version.",
     "Open the desktop app to install.": "Öffne die Desktop-App zur Installation.",
     "Downloading and verifying…": "Wird heruntergeladen und überprüft…",
-    "Installing. The app will restart…": "Wird installiert. Die App startet neu…"
+    "Installing. The app will restart…": "Wird installiert. Die App startet neu…",
+    "Waveform editing and A/B audition": "Wellenform bearbeiten und A/B anhören",
+    "Redo selection": "Auswahl neu erzeugen",
+    "Use version B": "Version B übernehmen"
   },
   "ja": {
     "Create": "作成",
@@ -1196,7 +1226,10 @@
     "You’re up to date.": "最新バージョンです。",
     "Open the desktop app to install.": "インストールするにはデスクトップアプリを開いてください。",
     "Downloading and verifying…": "ダウンロードして検証中…",
-    "Installing. The app will restart…": "インストール中。アプリが再起動します…"
+    "Installing. The app will restart…": "インストール中。アプリが再起動します…",
+    "Waveform editing and A/B audition": "波形編集と A/B 試聴",
+    "Redo selection": "選択部分を作り直す",
+    "Use version B": "B 版を採用"
   },
   "arz": {
     "Create": "اعمل",
@@ -1305,7 +1338,10 @@
     "You’re up to date.": "عندك أحدث إصدار.",
     "Open the desktop app to install.": "افتح تطبيق الكمبيوتر علشان تثبّت التحديث.",
     "Downloading and verifying…": "بننزّل وبنتحقق…",
-    "Installing. The app will restart…": "بنتثبّت. التطبيق هيفتح تاني…"
+    "Installing. The app will restart…": "بنتثبّت. التطبيق هيفتح تاني…",
+    "Waveform editing and A/B audition": "تعديل الموجة وسماع A/B",
+    "Redo selection": "اعمل الجزء المحدد تاني",
+    "Use version B": "استخدم النسخة B"
   },
   "mr": {
     "Create": "तयार करा",
@@ -1414,7 +1450,10 @@
     "You’re up to date.": "तुमच्याकडे नवीनतम आवृत्ती आहे.",
     "Open the desktop app to install.": "इंस्टॉल करण्यासाठी डेस्कटॉप ॲप उघडा.",
     "Downloading and verifying…": "डाउनलोड आणि पडताळणी सुरू…",
-    "Installing. The app will restart…": "इंस्टॉल होत आहे. ॲप पुन्हा सुरू होईल…"
+    "Installing. The app will restart…": "इंस्टॉल होत आहे. ॲप पुन्हा सुरू होईल…",
+    "Waveform editing and A/B audition": "वेव्हफॉर्म संपादन आणि A/B ऐकणे",
+    "Redo selection": "निवडलेला भाग पुन्हा तयार करा",
+    "Use version B": "आवृत्ती B वापरा"
   },
   "vi": {
     "Create": "Tạo",
@@ -1523,7 +1562,10 @@
     "You’re up to date.": "Bạn đang dùng phiên bản mới nhất.",
     "Open the desktop app to install.": "Mở ứng dụng trên máy tính để cài đặt.",
     "Downloading and verifying…": "Đang tải xuống và xác minh…",
-    "Installing. The app will restart…": "Đang cài đặt. Ứng dụng sẽ khởi động lại…"
+    "Installing. The app will restart…": "Đang cài đặt. Ứng dụng sẽ khởi động lại…",
+    "Waveform editing and A/B audition": "Chỉnh dạng sóng và nghe A/B",
+    "Redo selection": "Tạo lại đoạn đã chọn",
+    "Use version B": "Dùng bản B"
   },
   "te": {
     "Create": "సృష్టించండి",
@@ -1632,7 +1674,10 @@
     "You’re up to date.": "మీరు తాజా వెర్షన్ వాడుతున్నారు.",
     "Open the desktop app to install.": "ఇన్‌స్టాల్ చేయడానికి డెస్క్‌టాప్ యాప్‌ను తెరవండి.",
     "Downloading and verifying…": "డౌన్‌లోడ్ చేసి ధృవీకరిస్తోంది…",
-    "Installing. The app will restart…": "ఇన్‌స్టాల్ చేస్తోంది. యాప్ మళ్లీ తెరుచుకుంటుంది…"
+    "Installing. The app will restart…": "ఇన్‌స్టాల్ చేస్తోంది. యాప్ మళ్లీ తెరుచుకుంటుంది…",
+    "Waveform editing and A/B audition": "వేవ్‌ఫారమ్ సవరణ, A/B పోలిక",
+    "Redo selection": "ఎంచుకున్న భాగాన్ని మళ్లీ రూపొందించండి",
+    "Use version B": "B సంస్కరణ వాడండి"
   },
   "sw": {
     "Create": "Tengeneza",
@@ -1741,7 +1786,10 @@
     "You’re up to date.": "Unatumia toleo la karibuni.",
     "Open the desktop app to install.": "Fungua programu ya kompyuta ili kusakinisha.",
     "Downloading and verifying…": "Inapakua na kuthibitisha…",
-    "Installing. The app will restart…": "Inasakinisha. Programu itajianzisha upya…"
+    "Installing. The app will restart…": "Inasakinisha. Programu itajianzisha upya…",
+    "Waveform editing and A/B audition": "Hariri wimbi na sikiliza A/B",
+    "Redo selection": "Tengeneza tena sehemu",
+    "Use version B": "Tumia toleo B"
   },
   "ha": {
     "Create": "Ƙirƙira",
@@ -1850,7 +1898,10 @@
     "You’re up to date.": "Kana amfani da sabon sigar.",
     "Open the desktop app to install.": "Buɗe manhajar kwamfuta don girkawa.",
     "Downloading and verifying…": "Ana saukewa ana tantancewa…",
-    "Installing. The app will restart…": "Ana girkawa. Manhajar za ta sake buɗewa…"
+    "Installing. The app will restart…": "Ana girkawa. Manhajar za ta sake buɗewa…",
+    "Waveform editing and A/B audition": "Gyaran siginar sauti da sauraron A/B",
+    "Redo selection": "Sake yin sashen da aka zaɓa",
+    "Use version B": "Yi amfani da siga B"
   },
   "pcm": {
     "Create": "Make",
@@ -1959,6 +2010,9 @@
     "You’re up to date.": "Na the latest version you get.",
     "Open the desktop app to install.": "Open the desktop app to install am.",
     "Downloading and verifying…": "We dey download and verify am…",
-    "Installing. The app will restart…": "E dey install. The app go restart…"
+    "Installing. The app will restart…": "E dey install. The app go restart…",
+    "Waveform editing and A/B audition": "Edit waveform and listen A/B",
+    "Redo selection": "Redo di part wey you select",
+    "Use version B": "Use version B"
   }
 }
