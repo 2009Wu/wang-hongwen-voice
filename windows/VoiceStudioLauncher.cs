@@ -40,7 +40,12 @@ internal static class Program {
                 Console.SetError(new StreamWriter(Console.OpenStandardError(), new UTF8Encoding(false)) { AutoFlush = true });
                 var engine = new Engine(root, (n, message) => Console.WriteLine(n + "% " + message), Console.WriteLine);
                 if (args.Contains("--diagnose")) { Console.WriteLine(engine.HardwareCheck(false)); return 0; }
-                if (args.Contains("--install-only")) { engine.Setup(CancellationToken.None); return 0; }
+                if (args.Contains("--install-only")) {
+                    engine.Setup(CancellationToken.None);
+                    try { Console.WriteLine("桌面快捷方式：" + DesktopIntegration.CreateForCurrentUser()); }
+                    catch (Exception error) { Console.Error.WriteLine("无法创建桌面快捷方式：" + error.Message); }
+                    return 0;
+                }
                 int port = 7860;
                 for (int i = 0; i < args.Length - 1; i++) if (args[i] == "--port") port = int.Parse(args[++i]);
                 using (Process server = engine.StartServer(port, CancellationToken.None)) { Console.WriteLine("@@READY " + engine.AppUrl); server.WaitForExit(); return server.ExitCode; }
@@ -321,9 +326,6 @@ internal sealed class Engine {
             File.WriteAllText(Path.Combine(Runtime, "ready.json"), json.Serialize(new { fingerprint = Fingerprint(), created_utc = DateTime.UtcNow.ToString("o"), version = "0.3.3" }));
             CompactRuntime(token);
             CleanupInstallCaches();
-            // Desktop integration is optional: restricted desktops must not invalidate setup.
-            try { DesktopIntegration.CreateForCurrentUser(); }
-            catch (Exception error) { WriteLog("桌面快捷方式未创建，可在启动器中重试：" + error.Message); }
             Stage(100, "安装完成，可以打开工作室。");
         }
     }
@@ -417,6 +419,7 @@ internal sealed class LauncherForm : Form {
     private readonly Button primary = new Button();
     private readonly Button repair = new Button();
     private readonly Button stop = new Button();
+    private readonly LinkLabel desktopLink = new LinkLabel();
     private CancellationTokenSource cancel;
     private Process server;
     private StudioWindow desktopWindow;
@@ -441,7 +444,9 @@ internal sealed class LauncherForm : Form {
         showDetail.CheckedChanged += (sender, e) => { detail.Visible = showDetail.Checked; quickHelp.Visible = !showDetail.Checked; };
         var logs = new LinkLabel { Text = "打开安装日志", Location = new Point(34, 545), Size = new Size(190, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
         logs.LinkClicked += (sender, e) => { if (File.Exists(engine.LogPath)) Process.Start(new ProcessStartInfo(engine.LogPath) { UseShellExecute = true }); };
-        var desktopLink = new LinkLabel { Text = "创建 / 修复桌面快捷方式", Location = new Point(240, 545), Size = new Size(300, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
+        desktopLink.Text = "创建 / 修复桌面快捷方式";
+        desktopLink.SetBounds(240, 545, 360, 24);
+        desktopLink.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         desktopLink.LinkClicked += (sender, e) => EnsureDesktopShortcut(true);
         Controls.Add(desktopLink);
         Controls.AddRange(new Control[] {title, subtitle, hardware, status, progress, hint, primary, repair, stop, showDetail, quickHelp, detail, logs});
@@ -478,11 +483,21 @@ internal sealed class LauncherForm : Form {
             catch (Exception error) { hardware.Text = error.Message; }
         };
     }
-    private void EnsureDesktopShortcut(bool notify) {
+    private void EnsureDesktopShortcut(bool notify, bool warnOnFailure = false) {
         try {
-            DesktopIntegration.CreateForCurrentUser();
-            if (notify) MessageBox.Show("桌面快捷方式已创建。以后双击桌面图标即可直接打开工作室。\n请保留解压后的完整程序文件夹。", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-        } catch (Exception error) { AppendLog("桌面快捷方式未创建：" + error.Message); if (notify) MessageBox.Show(error.Message, Text); }
+            string path = DesktopIntegration.CreateForCurrentUser();
+            desktopLink.Text = "桌面快捷方式已就绪 · 点击查看";
+            if (notify) MessageBox.Show(this, "双击桌面图标打开工作室。\n\n" + path +
+                                        "\n\n请保留解压后的完整程序文件夹。",
+                                        Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        } catch (Exception error) {
+            desktopLink.Text = "桌面快捷方式未创建 · 点击重试";
+            AppendLog(desktopLink.Text + "：" + error.Message);
+            if (notify || warnOnFailure)
+                MessageBox.Show(this, "无法创建桌面快捷方式。\n\n" + error.Message +
+                                "\n\n仍可运行解压后的启动程序。",
+                                Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
     private async Task OpenFromShortcut() {
         if (desktopWindow != null) { desktopWindow.BringToUser(); return; }
@@ -533,8 +548,11 @@ internal sealed class LauncherForm : Form {
     private async Task BeginWork(bool setup) {
         busy = true; RefreshButtons(); cancel = new CancellationTokenSource(); string errorMessage = null;
         try {
+            if (setup) {
+                await Task.Run(() => engine.Setup(cancel.Token));
+                EnsureDesktopShortcut(false, warnOnFailure: true);
+            }
             await Task.Run(() => {
-                if (setup) engine.Setup(cancel.Token);
                 if (!File.Exists(Path.Combine(engine.Runtime, "update-request.json")))
                     server = engine.StartServer(7860, cancel.Token);
             });

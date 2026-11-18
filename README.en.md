@@ -1,6 +1,6 @@
 # Wang Hongwen Voice Studio · 王洪文语音工作室
 
-**Windows v0.5.3** · [Release notes](docs/releases/v0.5.3.md)
+**Windows v0.5.4** · [Release notes](docs/releases/v0.5.4.md)
 
 Open the studio from its desktop shortcut. The app checks for updates at startup and can install them in one click.
 
