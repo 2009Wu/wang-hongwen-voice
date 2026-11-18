@@ -8,57 +8,6 @@ from studio_paths import public_output_paths
 from runner import run_job
 from settings import ASSETS, CACHE, LANGUAGES, MAX_MB, MAX_SECONDS, MAX_TEXT, ROOT
 
-CSS = """
-.gradio-container { max-width: 1180px !important; margin: auto; }
-#masthead { padding: 30px 2px 22px; }
-#masthead .eyebrow { color: #a43c32; font-size: 12px; font-weight: 700; letter-spacing: .16em; }
-#masthead h1 { font-size: clamp(30px, 5vw, 47px); letter-spacing: -.045em; margin: 8px 0 10px; line-height: 1.12; }
-#masthead p { font-size: 16px; color: #68717c; max-width: 710px; line-height: 1.6; margin: 0; }
-#masthead .zh { font-weight: 400; font-size: .55em; color: #a43c32; margin-left: 12px; letter-spacing: .04em; white-space: nowrap; }
-.note { font-size: 13px; color: #68717c; }
-.panel-title { margin-top: 6px !important; }
-footer { display: none !important; }
-"""
-CSS += """
-#support-project {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-width: 10.75rem;
-    min-height: 2.875rem;
-    padding: 0.55rem 1rem;
-    border: 1px solid #d49c44;
-    border-radius: 0.75rem;
-    background: linear-gradient(135deg, #fff0ce, #f7cc78);
-    color: #422705;
-    box-shadow: 0 2px 7px #75450926;
-    font-weight: 650;
-    line-height: 1.35;
-    text-decoration: none;
-    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-}
-#support-project::before {
-    content: "☕" / "";
-    font-size: 1.15em;
-}
-@media (hover: hover) {
-    #support-project:hover {
-        background: #ffda8e;
-        box-shadow: 0 4px 12px #7545093d;
-        color: #422705;
-        transform: translateY(-1px);
-    }
-}
-#support-project:focus-visible {
-    outline: 3px solid #a36311;
-    outline-offset: 3px;
-}
-@media (prefers-reduced-motion: reduce) {
-    #support-project { transition: none; }
-    #support-project:hover { transform: none; }
-}
-"""
 
 
 def singing(upload, vocal_db, music_db, quality, video, progress=gr.Progress()):
@@ -131,10 +80,11 @@ def build_app():
 
 
 if __name__ == "__main__":
+    from studio_presentation import launch_presentation, studio_theme
     demo = build_app()
     demo.queue(max_size=8, default_concurrency_limit=1).launch(
         server_name=os.getenv("HOST", "0.0.0.0"), server_port=int(os.getenv("PORT", "7860")),
-        theme=gr.themes.Soft(primary_hue="red", neutral_hue="slate", font=["Inter", "system-ui", "sans-serif"]), css=CSS,
+        theme=studio_theme(),  **launch_presentation(),
         max_file_size=f"{MAX_MB}mb", show_error=False,allowed_paths=public_output_paths(),
         blocked_paths=[str(ASSETS), str(CACHE), str(ROOT / "vendor"), str(ROOT / ".runtime")],
         footer_links=[],

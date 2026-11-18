@@ -1,3 +1,9 @@
+# v0.5.0 — 完善页面 UI
+
+石墨蓝录音台，把试听控制集中到播放器旁。 右上角语言菜单列出全球使用人数最多的 20 种语言，普通话可选简体或繁体。切换语言会保留草稿。
+
+A graphite-blue workspace with preview controls next to the player. The language menu lists the top 20 languages by total speakers, including Simplified and Traditional Chinese as Mandarin script options. Language switching keeps drafts in place.
+
 # v0.4.2 — 完善页面 UI
 
 完善页面 UI。

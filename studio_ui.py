@@ -7,6 +7,7 @@ from studio_paths import PRODUCT,STATE,EXPORTS,SHARED_CACHE,read_json
 from studio_library import (history_choices,get_record,retry_request,redo_request,
     voice_choices,save_voice,load_voice,delete_voice,open_exports)
 from runner import run_job
+from studio_presentation import ACCENT, I18N, LOCALE_CONTROL, portrait, tr
 
 MEDIA=['.mp3','.mp4','.wav','.m4a','.flac','.ogg','.webm','.mov','.aac','.mkv']
 
@@ -35,6 +36,15 @@ def result_values(result,message):
         result.get('video'),result.get('details'),result.get('reference'),result.get('reference_text',''),
         message,gr.update(choices=history_choices(),value=result.get('history_id')),result.get('history_id'))
 
+def upload_field(label, identifier, height):
+    with gr.Column(min_width=0, elem_classes=['studio-upload-field'], elem_id=identifier):
+        gr.Markdown(tr(label), elem_id=f'{identifier}-label',
+                    elem_classes=['studio-field-label'], container=False)
+        return gr.File(label=tr(label), show_label=False, container=False,
+                       file_types=MEDIA, type='filepath', height=height,
+                       elem_classes=['studio-file'])
+
+
 def build_app(api):
     custom=PRODUCT['id']=='custom-voice-studio'
     def work(request,progress):
@@ -45,86 +55,81 @@ def build_app(api):
                 else:yield *(gr.skip() for _ in range(8)),message,gr.skip(),gr.skip()
         except Exception as error:raise gr.Error(str(error)) from error
 
-    with gr.Blocks(title=PRODUCT['name'],delete_cache=(600,3600)) as demo:
-        with gr.Row(equal_height=False):
-            with gr.Column(min_width=240):
-                gr.Markdown('# '+PRODUCT['name']+'\n'+('上传参考人声，再输入文字或放入歌曲。' if custom else '输入文字，或放入有原唱的音频／视频。')+'生成后会自动保存作品。')
-            gr.Button('给小王买杯咖啡', link='https://ko-fi.com/little_wang',
-                      link_target='_blank', size='lg', scale=0, min_width=156,
-                      elem_id='support-project')
-        with gr.Tab('生成作品'):
-            with gr.Row(equal_height=False):
-                with gr.Column(scale=6):
-                    if custom:
-                        favorite=gr.Dropdown(choices=voice_choices(),label='收藏的音色',value=None)
-                        reference=gr.File(label='参考人声 · MP3 / MP4 等',file_types=MEDIA,type='filepath')
-                        with gr.Accordion('先听参考片段 / 收藏音色',open=False):
-                            ref_start=gr.Number(value=0,minimum=0,maximum=3600,label='从第几秒开始寻找清晰讲话')
-                            ref_seconds=gr.Dropdown([5,10,15,20,25],value=20,label='参考片段最长秒数')
-                            inspect=gr.Button('提取并试听参考片段')
-                            selected_ref=gr.Audio(label='参考片段（可拖动裁剪，保留 3–25 秒）',type='filepath',editable=True)
-                            ref_hint=gr.Textbox(label='参考片段信息',interactive=False)
-                            ref_text=gr.Textbox(label='参考片段原话（留空自动识别）',lines=2)
-                            ref_lang=gr.Dropdown(LANGUAGES,value='Auto',label='参考讲话语言')
-                            voice_name=gr.Textbox(label='收藏名称',placeholder='例如：我的声音')
-                            with gr.Row():
-                                save=gr.Button('收藏这个音色');remove=gr.Button('移除选中的收藏')
-                    else:
+    with gr.Blocks(title=PRODUCT['name'], fill_width=True, delete_cache=(600,3600)) as demo:
+        with gr.Row(elem_id='studio-hero', elem_classes=[f'studio-{ACCENT}']):
+            if ACCENT == 'wang':
+                gr.HTML(portrait(), scale=0, min_width=0, elem_classes=['studio-portrait'])
+            with gr.Column(scale=3, min_width=232):
+                gr.Markdown(I18N('studio_hero'), elem_id='studio-hero-copy')
+            with gr.Column(scale=1, min_width=0, elem_classes=['studio-header-column']):
+                with gr.Row(elem_id='studio-header-actions', equal_height=False):
+                    gr.HTML(LOCALE_CONTROL, elem_id='studio-language', scale=0, min_width=110)
+                    gr.Button(tr('给小王买杯咖啡'), link='https://ko-fi.com/little_wang',
+                              link_target='_blank', scale=0, min_width=146, elem_id='support-project')
+        with gr.Tabs(elem_id='studio-main-tabs'):
+            with gr.Tab(tr('生成作品'), id='studio-create'):
+                with gr.Row(equal_height=False, elem_classes=['studio-workspace']):
+                    with gr.Column(scale=4, min_width=292, elem_classes=['studio-card', 'studio-compose']):
+                        gr.Markdown('## ' + str(tr('输入与设置')), header_links=False, elem_classes=['studio-card-heading'])
                         reference=gr.State(None);selected_ref=gr.State(None)
                         ref_start=gr.State(0);ref_seconds=gr.State(20);ref_text=gr.State('');ref_lang=gr.State('Auto')
-                    text=gr.Textbox(label='输入文字 → 配音',lines=4,placeholder='输入想朗读的内容……')
-                    song=gr.File(label='上传歌曲或视频 → 翻唱',file_types=MEDIA,type='filepath')
-                    gr.Markdown(f'文字与歌曲任选一种。最多 {MAX_TEXT} 字；文件不超过 {MAX_MB} MB。')
-                    with gr.Accordion('高级选项',open=False):
-                        performance=gr.Dropdown([('自动选择','auto'),('6 GB 节省显存','low'),('8 GB 均衡','balanced'),('12 GB+ 性能优先','fast')],value='auto',label='性能档位')
-                        steps=gr.Dropdown([('快速 · 20 步',20),('标准 · 40 步',40),('精细 · 60 步',60)],value=40,label='翻唱质量')
-                        vocals=gr.Slider(-2,9,value=4.5,step=.5,label='人声响度（dB）')
-                        music=gr.Slider(-12,3,value=-1.5,step=.5,label='伴奏响度（dB）')
-                        video=gr.Checkbox(True,label='输入为视频时同时导出 MP4')
-                        language=gr.Dropdown(LANGUAGES,value='Chinese',label='配音语言')
-                    with gr.Row():
-                        create=gr.Button('一键生成',variant='primary');stop=gr.Button('停止')
-                    with gr.Accordion('先试听一小段歌曲',open=True):
+                        text=gr.Textbox(label=tr('输入文字 → 配音'),lines=4,placeholder=tr('输入想朗读的内容……'))
+                        song = upload_field('上传歌曲或视频 → 翻唱', 'studio-song-upload', 118)
+                        gr.Markdown(I18N('studio_limits'), elem_classes=['studio-limits'])
+                        with gr.Accordion(tr('高级选项'),open=False):
+                            performance=gr.Dropdown([(tr('自动选择'),'auto'),(tr('6 GB 节省显存'),'low'),(tr('8 GB 均衡'),'balanced'),(tr('12 GB+ 性能优先'),'fast')],value='auto',label=tr('性能档位'))
+                            steps=gr.Dropdown([(tr('快速 · 20 步'),20),(tr('标准 · 40 步'),40),(tr('精细 · 60 步'),60)],value=40,label=tr('翻唱质量'))
+                            vocals=gr.Slider(-2,9,value=4.5,step=.5,label=tr('人声响度（dB）'))
+                            music=gr.Slider(-12,3,value=-1.5,step=.5,label=tr('伴奏响度（dB）'))
+                            video=gr.Checkbox(True,label=tr('输入为视频时同时导出 MP4'))
+                            language=gr.Dropdown(LANGUAGES,value='Chinese',label=tr('配音语言'))
                         with gr.Row():
-                            clip_start=gr.Number(value=0,minimum=0,label='试听起点（秒）')
-                            clip_seconds=gr.Dropdown([10,15,20],value=15,label='试听长度（秒）')
-                        preview=gr.Button('生成歌曲试听')
-                        approved=gr.Button('满意了，沿用这段试听生成整首')
-                with gr.Column(scale=5):
-                    status=gr.Textbox(label='进度 / 保存位置',value='等待文字或歌曲。',interactive=False,lines=3)
-                    audio=gr.Audio(label='生成结果 · AI 合成',type='filepath',interactive=False)
-                    mp3=gr.DownloadButton('下载 MP3');flac=gr.DownloadButton('下载 FLAC · 无损')
-                    with gr.Accordion('更多文件',open=False):
-                        wav=gr.DownloadButton('下载 WAV');movie=gr.DownloadButton('下载 MP4');details=gr.DownloadButton('生成参数')
-                        used=gr.Audio(label='实际使用的参考声音',type='filepath',interactive=False)
-                        transcript=gr.Textbox(label='参考原话',interactive=False)
-                    folder=gr.Button('打开作品文件夹')
-                    current=gr.State(None)
-        with gr.Tab('作品历史'):
-            history=gr.Dropdown(choices=history_choices(),label='已保存作品',value=None)
-            refresh=gr.Button('刷新作品列表');load=gr.Button('载入作品到播放器')
-            gr.Markdown('载入后在“生成作品”中播放或下载。作品永久保留；局部修改素材保留 7 天，总量上限约 5 GB，超出后先清理旧素材。')
-            with gr.Row():
-                redo_start=gr.Number(value=0,minimum=0,label='重做起点（秒）');redo_end=gr.Number(value=10,minimum=0,label='重做终点（秒）')
-            redo=gr.Button('只重做这个区间（最多 120 秒）')
-            retry=gr.Button('重试所选任务');history_full=gr.Button('用所选试听生成整首')
-        with gr.Tab('更新与帮助'):
-            gr.Markdown(f'当前版本 **{PRODUCT["version"]}**\n\n作品目录：`{EXPORTS}`\n\n两个工作室共用模型缓存：`{SHARED_CACHE}`。音色收藏和作品记录分别保存。')
-            from studio_update import automatic_updates_enabled, set_automatic_updates
-            automatic = gr.Checkbox(
-                label='启动时自动更新', value=automatic_updates_enabled(),
-                info='打开工作室时检查并安装新版，然后进入网页。离线时会继续打开当前版本。',
-                visible=bool(os.getenv('VOICE_LAUNCHER_PID')),
-            )
-            update_info=gr.Textbox(label='更新状态',value=(read_json(ROOT/'.runtime/update-result.json') or {}).get('message','可手动检查更新。'),interactive=False)
-            with gr.Row():
-                check=gr.Button('检查更新');download=gr.Button('下载并校验新版')
-                install=gr.Button('安装已下载更新并重启');rollback=gr.Button('回退到上一个版本')
-            staged=gr.State(None)
-            gr.Markdown('更新前先停止生成。安装和回退会关闭并重新打开工作室，作品、收藏音色和模型不受影响。回退后，自动更新会等待更高版本。')
-            diagnose=gr.Button('导出诊断报告');report=gr.File(label='诊断报告（不含录音、输入文字和作品）',interactive=False)
-            gr.Markdown('显存不足：关闭其他显卡程序，选择“6 GB 节省显存”。下载失败：检查网络后重试，保留已有缓存。无法启动：在启动器点击“修复安装”。')
-        gr.Markdown('所有输出均为 AI 合成，不能作为本人真实录音。素材与生成均在本机处理。')
+                            create=gr.Button(tr('一键生成'),variant='primary');stop=gr.Button(tr('停止'))
+                    with gr.Column(scale=6, min_width=272, elem_classes=['studio-card', 'studio-output']):
+                        gr.Markdown('## ' + str(tr('试听与导出')), header_links=False, elem_classes=['studio-card-heading'])
+                        audio=gr.Audio(label=tr('生成结果 · AI 合成'),type='filepath',interactive=False, elem_classes=['studio-sound'])
+                        status=gr.Textbox(label=tr('进度 / 保存位置'),value=tr('等待文字或歌曲。'),interactive=False,lines=2,elem_classes=['studio-status'])
+                        with gr.Accordion(tr('先试听一小段歌曲'),open=True, elem_classes=['studio-preview']):
+                            with gr.Row():
+                                clip_start=gr.Number(value=0,minimum=0,label=tr('试听起点（秒）'))
+                                clip_seconds=gr.Dropdown([10,15,20],value=15,label=tr('试听长度（秒）'))
+                            with gr.Row(elem_classes=['studio-utilities']):
+                                preview = gr.Button(tr('生成歌曲试听'))
+                                approved = gr.Button(tr('满意了，沿用这段试听生成整首'))
+                        with gr.Row(elem_classes=['studio-utilities']):
+                            mp3=gr.DownloadButton(tr('下载 MP3'))
+                            flac=gr.DownloadButton(tr('下载 FLAC · 无损'))
+                        with gr.Accordion(tr('更多文件'),open=False):
+                            wav=gr.DownloadButton(tr('下载 WAV'));movie=gr.DownloadButton(tr('下载 MP4'));details=gr.DownloadButton(tr('生成参数'))
+                            used=gr.Audio(label=tr('实际使用的参考声音'),type='filepath',interactive=False)
+                            transcript=gr.Textbox(label=tr('参考原话'),interactive=False)
+                        folder=gr.Button(tr('打开作品文件夹'))
+                        current=gr.State(None)
+            with gr.Tab(tr('作品历史'), id='studio-history'):
+                history=gr.Dropdown(choices=history_choices(),label=tr('已保存作品'),value=None)
+                refresh=gr.Button(tr('刷新作品列表'));load=gr.Button(tr('载入作品到播放器'))
+                gr.Markdown(tr('载入后在“生成作品”中播放或下载。作品永久保留；局部修改素材保留 7 天，总量上限约 5 GB，超出后先清理旧素材。'))
+                with gr.Row():
+                    redo_start=gr.Number(value=0,minimum=0,label=tr('重做起点（秒）'));redo_end=gr.Number(value=10,minimum=0,label=tr('重做终点（秒）'))
+                redo=gr.Button(tr('只重做这个区间（最多 120 秒）'))
+                retry=gr.Button(tr('重试所选任务'));history_full=gr.Button(tr('用所选试听生成整首'))
+            with gr.Tab(tr('更新与帮助'), id='studio-help'):
+                gr.Markdown(I18N('studio_about'))
+                from studio_update import automatic_updates_enabled, set_automatic_updates
+                automatic = gr.Checkbox(
+                    label=tr('启动时自动更新'), value=automatic_updates_enabled(),
+                    info=tr('打开工作室时检查并安装新版，然后进入网页。离线时会继续打开当前版本。'),
+                    visible=bool(os.getenv('VOICE_LAUNCHER_PID')),
+                )
+                update_info=gr.Textbox(label=tr('更新状态'),value=(read_json(ROOT/'.runtime/update-result.json') or {}).get('message',tr('可手动检查更新。')),interactive=False)
+                with gr.Row():
+                    check=gr.Button(tr('检查更新'));download=gr.Button(tr('下载并校验新版'))
+                    install=gr.Button(tr('安装已下载更新并重启'));rollback=gr.Button(tr('回退到上一个版本'))
+                staged=gr.State(None)
+                gr.Markdown(tr('更新前先停止生成。安装和回退会关闭并重新打开工作室，作品、收藏音色和模型不受影响。回退后，自动更新会等待更高版本。'))
+                diagnose=gr.Button(tr('导出诊断报告'));report=gr.File(label=tr('诊断报告（不含录音、输入文字和作品）'),interactive=False)
+                gr.Markdown(tr('显存不足：关闭其他显卡程序，选择“6 GB 节省显存”。下载失败：检查网络后重试，保留已有缓存。无法启动：在启动器点击“修复安装”。'))
+        gr.Markdown(tr('所有输出均为 AI 合成，不能作为本人真实录音。素材与生成均在本机处理。'), elem_id='studio-footnote')
         outputs=[audio,mp3,flac,wav,movie,details,used,transcript,status,history,current]
         inputs=[reference,selected_ref,text,song,performance,steps,vocals,music,video,language,ref_start,ref_seconds,ref_text,ref_lang,clip_start,clip_seconds]
         def make(values,is_preview):

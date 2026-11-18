@@ -1,0 +1,84 @@
+# Simplified Chinese	English	Traditional Chinese
+生成作品	Create	製作作品
+作品历史	History	作品記錄
+更新与帮助	Updates & Help	更新與說明
+给小王买杯咖啡	Buy Xiao Wang a coffee	請小王喝杯咖啡
+输入与设置	Inputs and settings	輸入與設定
+试听与导出	Preview and export	試聽與匯出
+收藏的音色	Saved voices	收藏的音色
+参考人声 · MP3 / MP4 等	Reference voice · MP3, MP4 and more	參考人聲 · MP3 / MP4 等
+先听参考片段 / 收藏音色	Preview or save a reference voice	先聽參考片段／收藏音色
+从第几秒开始寻找清晰讲话	Find clear speech starting at (seconds)	從第幾秒開始尋找清晰語音
+参考片段最长秒数	Maximum reference length (seconds)	參考片段最長秒數
+提取并试听参考片段	Extract and preview the reference	擷取並試聽參考片段
+参考片段（可拖动裁剪，保留 3–25 秒）	Reference clip (drag to trim to 3–25 seconds)	參考片段（可拖曳裁剪，保留 3–25 秒）
+参考片段信息	Reference details	參考片段資訊
+参考片段原话（留空自动识别）	Reference transcript (blank for auto transcription)	參考片段原文（留空自動辨識）
+参考讲话语言	Reference language	參考語音語言
+收藏名称	Voice name	收藏名稱
+例如：我的声音	e.g. My voice	例如：我的聲音
+收藏这个音色	Save this voice	收藏這個音色
+移除选中的收藏	Remove selected voice	移除選取的音色
+输入文字 → 配音	Enter text for voiceover	輸入文字 → 配音
+输入想朗读的内容……	Enter the text to read aloud…	輸入想朗讀的內容……
+上传歌曲或视频 → 翻唱	Upload a song or video for a cover	上傳歌曲或影片 → 翻唱
+高级选项	Advanced options	進階選項
+自动选择	Automatic	自動選擇
+6 GB 节省显存	6 GB · Low VRAM	6 GB · 節省顯示記憶體
+8 GB 均衡	8 GB · Balanced	8 GB · 均衡
+12 GB+ 性能优先	12 GB+ · Performance	12 GB+ · 效能優先
+性能档位	Performance profile	效能模式
+快速 · 20 步	Fast · 20 steps	快速 · 20 步
+标准 · 40 步	Standard · 40 steps	標準 · 40 步
+精细 · 60 步	Detailed · 60 steps	精細 · 60 步
+翻唱质量	Cover quality	翻唱品質
+人声响度（dB）	Vocal level (dB)	人聲音量（dB）
+伴奏响度（dB）	Backing track level (dB)	伴奏音量（dB）
+输入为视频时同时导出 MP4	Export MP4 when the input is a video	輸入為影片時一併匯出 MP4
+配音语言	Voiceover language	配音語言
+一键生成	Generate	開始生成
+停止	Stop	停止
+先试听一小段歌曲	Preview a short section	先試聽一小段歌曲
+试听起点（秒）	Preview start (seconds)	試聽起點（秒）
+试听长度（秒）	Preview length (seconds)	試聽長度（秒）
+生成歌曲试听	Generate preview	生成試聽片段
+满意了，沿用这段试听生成整首	Apply preview settings to the full song	沿用試聽設定生成整首
+进度 / 保存位置	Progress / save location	進度／儲存位置
+等待文字或歌曲。	Ready for text or a song.	等待文字或歌曲。
+生成结果 · AI 合成	Result · AI-generated	生成結果 · AI 合成
+下载 MP3	Download MP3	下載 MP3
+下载 FLAC · 无损	Download FLAC · Lossless	下載 FLAC · 無損
+更多文件	More files	更多檔案
+下载 WAV	Download WAV	下載 WAV
+下载 MP4	Download MP4	下載 MP4
+生成参数	Generation settings	生成參數
+实际使用的参考声音	Reference audio used	實際使用的參考聲音
+参考原话	Reference transcript	參考原文
+打开作品文件夹	Open project folder	開啟作品資料夾
+已保存作品	Saved projects	已儲存作品
+刷新作品列表	Refresh projects	重新整理作品列表
+载入作品到播放器	Load project into player	在播放器載入作品
+载入后在“生成作品”中播放或下载。作品永久保留；局部修改素材保留 7 天，总量上限约 5 GB，超出后先清理旧素材。	Play or download loaded projects in Create. Finished projects stay saved. Source files for partial edits are kept for up to 7 days, with a storage limit of about 5 GB.	載入後可在「製作作品」中播放或下載。完成的作品會永久保留；局部修改素材保留 7 天，上限約 5 GB，超出後會優先清理舊素材。
+重做起点（秒）	Redo start (seconds)	重做起點（秒）
+重做终点（秒）	Redo end (seconds)	重做終點（秒）
+只重做这个区间（最多 120 秒）	Redo only this section (up to 120 seconds)	只重做這個區間（最多 120 秒）
+重试所选任务	Retry selected job	重試選取的工作
+用所选试听生成整首	Use selected preview for full song	使用選取的試聽片段生成整首
+参考音色取自 1974 年 4 月 10 日联合国大会讲话。	The reference voice comes from the UN General Assembly speech of April 10, 1974.	參考音色取自 1974 年 4 月 10 日聯合國大會演講。
+启动时自动更新	Check for updates at startup	啟動時自動更新
+打开工作室时检查并安装新版，然后进入网页。离线时会继续打开当前版本。	Check for and install updates before opening the app. The current version opens when offline.	開啟工作室時會檢查並安裝新版，再開啟介面。離線時仍可開啟目前版本。
+更新状态	Update status	更新狀態
+可手动检查更新。	You can also check for updates manually.	也可手動檢查更新。
+检查更新	Check for updates	檢查更新
+下载并校验新版	Download and verify update	下載並驗證新版
+安装已下载更新并重启	Install update and restart	安裝已下載的更新並重新啟動
+回退到上一个版本	Roll back to the previous version	還原到上一個版本
+更新前先停止生成。安装和回退会关闭并重新打开工作室，作品、收藏音色和模型不受影响。回退后，自动更新会等待更高版本。	Stop generation before updating. Installing or rolling back restarts the studio and keeps your work, saved voices and models. After a rollback, automatic updates wait for a newer release.	更新前請先停止生成。安裝和還原會重新開啟工作室，並保留作品、收藏音色與模型。還原後，自動更新會等待更高版本。
+导出诊断报告	Export diagnostics	匯出診斷報告
+诊断报告（不含录音、输入文字和作品）	Diagnostic report (excludes recordings, text and projects)	診斷報告（不含錄音、輸入文字和作品）
+显存不足：关闭其他显卡程序，选择“6 GB 节省显存”。下载失败：检查网络后重试，保留已有缓存。无法启动：在启动器点击“修复安装”。	Low VRAM? Close other GPU apps and choose 6 GB · Low VRAM. If a download fails, check your connection and retry. If the app won't open, use Repair in the launcher.	顯示記憶體不足時，請關閉其他使用 GPU 的程式，並選擇「6 GB · 節省顯示記憶體」。下載失敗時，請檢查網路後重試。無法啟動時，請在啟動器中選擇「修復安裝」。
+所有输出均为 AI 合成，不能作为本人真实录音。素材与生成均在本机处理。	All output is AI-generated. Files and generation are processed locally.	所有輸出均為 AI 合成。素材與生成均在本機處理。
+
+参考音色	Voice reference	參考音色
+文字或歌曲	Text or song	文字或歌曲
+生成音频	Audio result	生成音訊

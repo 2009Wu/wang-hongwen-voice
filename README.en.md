@@ -1,5 +1,7 @@
 # Wang Hongwen Voice Studio · 王洪文语音工作室
 
+A graphite-blue workspace with preview controls next to the player. The language menu lists the top 20 languages by total speakers, including Simplified and Traditional Chinese as Mandarin script options. Language switching keeps drafts in place.
+
 [简体中文](README.md) · **English** · [更新日志 / Changelog](CHANGELOG.md)
 
 Open-source AI singing conversion and text-to-speech using an archival Wang Hongwen voice reference.
@@ -24,7 +26,7 @@ Requires 64-bit Windows 10/11, a **6 GB-class or larger NVIDIA GPU**, a current 
 
 All weights, references, default 40 steps and mixing settings are preserved. FLAC decodes to the exact WAV PCM samples. Successful setup removes only app-owned pip/download caches, preserving models and runtime.
 
-![Chinese one-button interface](docs/app-preview.png)
+![Updated generation workspace](docs/studio-preview.jpg)
 
 ## What it does
 

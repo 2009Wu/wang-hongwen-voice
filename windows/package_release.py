@@ -13,7 +13,7 @@ import re
 import zipfile
 
 ROOT_FILES = {
-    'studio_ui.py','studio_paths.py','studio_library.py','studio_song.py','studio_actions.py',
+    'studio_ui.py','studio_presentation.py','studio_paths.py','studio_library.py','studio_song.py','studio_actions.py',
     'studio_update.py','studio_diagnostics.py','studio-version.json',
     '.dockerignore', '.gitattributes', '.gitignore', 'CHANGELOG.md',
     'Dockerfile', 'LICENSE', 'README.en.md', 'README.md', 'START HERE.txt',

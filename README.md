@@ -1,5 +1,7 @@
 # 王洪文语音工作室 · Wang Hongwen Voice Studio
 
+石墨蓝录音台，把试听控制集中到播放器旁。 右上角语言菜单列出全球使用人数最多的 20 种语言，普通话可选简体或繁体。切换语言会保留草稿。
+
 [English](README.en.md) · [安装说明](docs/Windows-Setup.zh-CN.md) · [更新记录](CHANGELOG.md)
 
 上传歌曲，或输入一段文字，制作以王洪文讲话为参考的翻唱和配音。支持 MP3、MP4 等音视频文件，在自己的 Windows 电脑上运行。
@@ -53,7 +55,7 @@ v0.3.3 进一步移除本程序不使用的上游演示网页资源、开发头�
 
 **验证范围：** 已在 Windows 11 / RTX 5070 Ti 16 GB 上，用 **4.5 GiB PyTorch 分配上限**验证低显存翻唱和中文语音。物理 6 GB 显卡尚待实机验证，不能保证所有型号及占用状态都能运行。详见 [v0.3.0 验证](docs/v0.3.0-Validation.md)。
 
-![中文一键生成界面](docs/app-preview.png)
+![新版生成界面](docs/studio-preview.jpg)
 
 ## 默认效果和文件体积
 
