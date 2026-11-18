@@ -1,58 +1,38 @@
 """Checksum-verified portable updates with a recoverable code backup."""
 from __future__ import annotations
-import argparse,hashlib,json,os,re,shutil,subprocess,time,urllib.request,uuid,zipfile
+import argparse,hashlib,json,os,re,shutil,subprocess,threading,time,urllib.request,uuid,zipfile
 from pathlib import Path,PurePosixPath
 from studio_paths import ROOT,PRODUCT,atomic_json,read_json,owned_path,sha256,file_lock
 
-ALLOWED={'2009Wu/custom-voice-studio','2009Wu/wang-hongwen-voice'}
-LIMIT=30*1024**2
-AUTO_CHECK_INTERVAL = 6 * 60 * 60
+ALLOWED = {
+    '2009Wu/custom-voice-studio',
+    '2009Wu/wang-hongwen-voice',
+    '2009Wu/deng-xiaoping-voice',
+}
+LIMIT = 30 * 1024**2
+_check_lock = threading.Lock()
+_check_cache = None
+
 
 def automatic_update_settings(root=None):
-    path = (root or ROOT) / '.runtime/updates/automatic.json'
-    settings = read_json(path)
+    settings = read_json((root or ROOT) / '.runtime/updates/automatic.json')
     return settings if isinstance(settings, dict) else {}
 
-def automatic_updates_enabled():
-    return automatic_update_settings().get('enabled', True) is not False
 
-def set_automatic_updates(enabled):
-    settings = automatic_update_settings()
-    settings['enabled'] = bool(enabled)
-    if enabled:
-        settings.pop('last_check', None)
-    atomic_json(ROOT / '.runtime/updates/automatic.json', settings)
-
-def prepare_automatic_update():
-    # The desktop launcher calls this before starting the browser server.
-    request_path = ROOT / '.runtime/update-request.json'
-    if request_path.exists():
-        return
-    settings = automatic_update_settings()
-    if settings.get('enabled', True) is False:
-        return
-    now = time.time()
-    last_check = settings.get('last_check')
-    if isinstance(last_check, (int, float)) and 0 <= now - last_check < AUTO_CHECK_INTERVAL:
-        return
-
-    # Record the attempt before networking, so a failed update cannot restart in a loop.
-    settings['last_check'] = now
-    atomic_json(ROOT / '.runtime/updates/automatic.json', settings)
-    try:
-        latest = check_update(timeout=5)
-        if not latest['available']:
-            return
-        skipped = settings.get('skip_through')
-        if skipped and version(latest['tag']) <= version(skipped):
-            return
-        stage = stage_update(latest=latest, timeout=5)
-        atomic_json(request_path, {'kind': 'apply', 'stage': stage})
-    except Exception as error:
-        # Retry a transient download on the next launch, with a short cooldown.
-        settings['last_check'] = now - AUTO_CHECK_INTERVAL + 30 * 60
-        atomic_json(ROOT / '.runtime/updates/automatic.json', settings)
-        print('自动更新检查未完成：' + str(error)[:250], flush=True)
+def check_on_open():
+    """Check in the background, coalescing checks from nearby page loads."""
+    global _check_cache
+    with _check_lock:
+        now = time.monotonic()
+        if _check_cache and now < _check_cache[0]:
+            return _check_cache[1]
+        try:
+            latest = check_update(timeout=5)
+        except (OSError, ValueError, KeyError):
+            _check_cache = (now + 30, None)
+            return None
+        _check_cache = (now + 90, latest)
+        return latest
 
 
 def version(value):
@@ -86,7 +66,11 @@ def check_update(timeout=30):
         for name in (PRODUCT['asset'], PRODUCT['asset'] + '.sha256'):
             if assets[name] != release_prefix + name:
                 raise ValueError('更新附件不属于当前项目的发布版本。')
-    result={'tag':tag,'available':available,'assets':assets,'checked':time.time()}
+    result = {
+        'tag': tag, 'available': available, 'assets': assets, 'checked': time.time(),
+        'title': str(release.get('name') or tag)[:240],
+        'notes': str(release.get('body') or '')[:12000],
+    }
     atomic_json(ROOT/'.runtime/updates/latest.json',result)
     return result
 
@@ -128,15 +112,28 @@ def stage_update(latest=None, timeout=30):
     if latest is None:
         latest=check_update(timeout=timeout)
     if not latest['available']:return None
-    folder=ROOT/'.runtime/updates/staged'/uuid.uuid4().hex;folder.mkdir(parents=True)
-    url=latest['assets'][PRODUCT['asset']];data=download(url,timeout=timeout)
-    checksum=download(latest['assets'][PRODUCT['asset']+'.sha256'],4096,timeout=timeout).decode('utf-8-sig').split()[0].lower()
-    if not re.fullmatch('[0-9a-f]{64}',checksum) or hashlib.sha256(data).hexdigest()!=checksum:raise ValueError('更新包校验失败，当前版本没有改动，请重试下载。')
-    archive=folder/'update.zip';archive.write_bytes(data)
-    meta=unpack_bundle(archive,folder/'bundle')
-    if version(meta['version'])!=version(latest['tag']):raise ValueError('更新包与发布版本不一致。')
-    atomic_json(folder/'stage.json',{'version':meta['version'],'sha256':checksum})
+    if version(latest['tag']) <= version(PRODUCT['version']):
+        return None
+    url = latest['assets'][PRODUCT['asset']]
+    data = download(url, timeout=timeout)
+    checksum_file = download(latest['assets'][PRODUCT['asset'] + '.sha256'], 4096, timeout=timeout)
+    checksum = checksum_file.decode('utf-8-sig').strip().partition(' ')[0].split('\t')[0].lower()
+    if not re.fullmatch('[0-9a-f]{64}', checksum) or hashlib.sha256(data).hexdigest() != checksum:
+        raise ValueError('更新包校验失败，请重试下载。')
+    folder = ROOT / '.runtime/updates/staged' / uuid.uuid4().hex
+    folder.mkdir(parents=True)
+    try:
+        archive = folder / 'update.zip'
+        archive.write_bytes(data)
+        meta = unpack_bundle(archive, folder / 'bundle')
+        if version(meta['version']) != version(latest['tag']):
+            raise ValueError('更新包与发布版本不一致。')
+        atomic_json(folder / 'stage.json', {'version': meta['version'], 'sha256': checksum})
+    except Exception:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise
     return str(folder)
+
 
 def last_backup(root=ROOT):
     pointer=read_json(Path(root)/'.runtime/updates/last-backup.json')
@@ -159,7 +156,10 @@ def request_update(stage=None,rollback=False):
             stage=owned_path(ROOT/'.runtime/updates/staged',stage,must_exist=True)
             payload={'kind':'apply','stage':str(stage)}
         if not os.getenv('VOICE_LAUNCHER_PID'):raise ValueError('请使用桌面启动器打开工作室后安装更新；直接运行源码时请手动更新。')
-        atomic_json(ROOT/'.runtime/update-request.json',payload)
+        request = ROOT / '.runtime/update-request.json'
+        if request.exists():
+            raise ValueError('更新已在安装。')
+        atomic_json(request, payload)
     finally:GPU_LOCK.release()
     return '正在关闭界面并安装更新，完成后会自动重新打开。作品、音色和模型会保留。'
 
@@ -266,7 +266,7 @@ def finish_request(root, recover):
                 settings['skip_through'] = max(skipped, PRODUCT['version'], key=version)
                 atomic_json(root / '.runtime/updates/automatic.json', settings)
                 restore_backup(request['backup'],root)
-                message='已回退到上一个版本。自动更新会等待更高版本。'
+                message='已回退到上一个版本。'
             else:raise ValueError('未知更新操作。')
         atomic_json(root/'.runtime/update-result.json',{'ok':True,'message':message})
     except Exception as error:
@@ -281,6 +281,7 @@ if __name__ == '__main__':
     parser.add_argument('--wait-pid', type=int, default=0)
     args = parser.parse_args()
     if args.command == 'prepare-automatic':
-        prepare_automatic_update()
+        # Older launchers may still call this command while being upgraded.
+        check_on_open()
     else:
         run_request(args.root, args.wait_pid, args.command == 'recover')

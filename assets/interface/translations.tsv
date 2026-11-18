@@ -72,14 +72,23 @@
 可手动检查更新。	You can also check for updates manually.	也可手動檢查更新。
 检查更新	Check for updates	檢查更新
 下载并校验新版	Download and verify update	下載並驗證新版
-安装已下载更新并重启	Install update and restart	安裝已下載的更新並重新啟動
+安装更新并重启	Install update and restart	安裝更新並重新啟動
 回退到上一个版本	Roll back to the previous version	還原到上一個版本
 更新前先停止生成。安装和回退会关闭并重新打开工作室，作品、收藏音色和模型不受影响。回退后，自动更新会等待更高版本。	Stop generation before updating. Installing or rolling back restarts the studio and keeps your work, saved voices and models. After a rollback, automatic updates wait for a newer release.	更新前請先停止生成。安裝和還原會重新開啟工作室，並保留作品、收藏音色與模型。還原後，自動更新會等待更高版本。
 导出诊断报告	Export diagnostics	匯出診斷報告
 诊断报告（不含录音、输入文字和作品）	Diagnostic report (excludes recordings, text and projects)	診斷報告（不含錄音、輸入文字和作品）
 显存不足：关闭其他显卡程序，选择“6 GB 节省显存”。下载失败：检查网络后重试，保留已有缓存。无法启动：在启动器点击“修复安装”。	Low VRAM? Close other GPU apps and choose 6 GB · Low VRAM. If a download fails, check your connection and retry. If the app won't open, use Repair in the launcher.	顯示記憶體不足時，請關閉其他使用 GPU 的程式，並選擇「6 GB · 節省顯示記憶體」。下載失敗時，請檢查網路後重試。無法啟動時，請在啟動器中選擇「修復安裝」。
-所有输出均为 AI 合成，不能作为本人真实录音。素材与生成均在本机处理。	All output is AI-generated. Files and generation are processed locally.	所有輸出均為 AI 合成。素材與生成均在本機處理。
+所有输出均为 AI 合成，不能作为本人真实录音。	All output is AI-generated.	所有輸出均為 AI 合成。
 
 参考音色	Voice reference	參考音色
 文字或歌曲	Text or song	文字或歌曲
 生成音频	Audio result	生成音訊
+新版更新内容	What’s new	新版更新內容
+有新版本可用	Update available	有新版本可用
+关闭提醒	Dismiss	關閉提醒
+正在检查更新…	Checking for updates…	正在檢查更新…
+暂时无法检查更新。	Couldn’t check for updates.	暫時無法檢查更新。
+当前已是最新版本。	You’re up to date.	目前已是最新版本。
+请从桌面快捷方式打开以安装。	Open the desktop app to install.	請從桌面捷徑開啟以安裝。
+正在下载并校验更新…	Downloading and verifying…	正在下載並驗證更新…
+正在安装，工作室将自动重启…	Installing. The app will restart…	正在安裝，工作室將自動重新啟動…

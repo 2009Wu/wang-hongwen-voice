@@ -30,3 +30,7 @@ Installed packages include their own license files. FFmpeg, SoX, and system libr
 Pinned model revision identifiers and model-card license metadata are in `models.json`. No person-specific trained checkpoint is claimed or included.
 
 The application icon is converted from a user-supplied photograph. The photograph is separate from the GPL software license; no additional image rights are asserted by this project. Original file: assets/icon-source.jpg.
+
+## Microsoft WebView2
+
+The Windows desktop interface uses the Microsoft WebView2 SDK. The SDK redistribution license and third-party notices are included in [windows/webview2](windows/webview2). The updater installs the studio files, and the desktop window uses the WebView2 Runtime available on Windows.

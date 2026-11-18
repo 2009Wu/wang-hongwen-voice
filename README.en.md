@@ -1,5 +1,9 @@
 # Wang Hongwen Voice Studio · 王洪文语音工作室
 
+**Windows v0.5.2** · [Release notes](docs/releases/v0.5.2.md)
+
+Open the studio from its desktop shortcut. The app checks for updates at startup and can install them in one click.
+
 A graphite-blue workspace with preview controls next to the player. The language menu lists the top 20 languages by total speakers, including Simplified and Traditional Chinese as Mandarin script options. Language switching keeps drafts in place.
 
 [简体中文](README.md) · **English** · [更新日志 / Changelog](CHANGELOG.md)
@@ -22,7 +26,7 @@ Share feature ideas, bugs, or feedback about speech and singing quality. [Open t
 
 3. Enter text OR upload an existing vocal song, click **一键生成** (Generate), then download MP3 or lossless FLAC.
 
-Keep the launcher open. Advanced settings are collapsed; automatic memory selection is the default. No manual Python/Docker/terminal setup.
+After setup, open the studio from its desktop shortcut. Closing the studio stops its local service. Advanced settings are collapsed; automatic memory selection is the default. No manual Python/Docker/terminal setup.
 
 Requires 64-bit Windows 10/11, a **6 GB-class or larger NVIDIA GPU**, a current driver, internet for first downloads, and 30 GB free disk space during setup. 16 GB system RAM is recommended. Low-memory singing uses CPU separation and sequential GPU residency; larger profiles reduce CPU work/transfers. More VRAM alone does not guarantee a particular speed.
 

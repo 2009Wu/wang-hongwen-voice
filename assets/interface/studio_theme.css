@@ -192,3 +192,28 @@ gradio-app[dir="rtl"] .gradio-container {
     #studio-main-tabs [role="tab"] { white-space: normal; }
 }
 .studio-card-heading, .studio-field-label, .studio-limits { overflow: visible !important; }
+
+#studio-current-version h3 { margin-block: 0; }
+#studio-new-release, #studio-update-toast {
+    box-sizing: border-box;
+    padding: 16px 18px;
+    gap: 10px;
+    border: 1px solid var(--studio-control-line);
+    border-radius: 14px;
+    background: var(--studio-paper);
+}
+#studio-new-release button { align-self: flex-start; width: max-content; max-width: 100%; }
+.studio-release-notes { overflow-wrap: anywhere; overflow: auto; max-height: 20rem; color: var(--studio-ink); }
+.studio-release-notes p { white-space: pre-wrap; margin-block: .45rem 0; }
+#studio-update-toast {
+    position: fixed;
+    inset-inline-end: clamp(12px, 2vw, 28px);
+    bottom: clamp(12px, 2vw, 28px);
+    width: min(370px, calc(100vw - 24px));
+    z-index: 100;
+    border-block-start: 3px solid var(--studio-focus);
+    box-shadow: 0 12px 42px #10142640;
+}
+#studio-update-toast p { margin: 0; overflow-wrap: anywhere; }
+#studio-update-toast .studio-update-toast-title { font-weight: 700; }
+#studio-update-toast button { min-height: 42px; }

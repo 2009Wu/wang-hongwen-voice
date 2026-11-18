@@ -1,5 +1,5 @@
 ﻿// SPDX-License-Identifier: GPL-3.0-only
-// Build using the .NET Framework C# compiler; no third-party GUI runtime required.
+// Build using the .NET Framework C# compiler and Microsoft WebView2 SDK.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -334,35 +334,6 @@ internal sealed class Engine {
         }
         throw new InvalidOperationException("No free local app port was found. Close other copies of the app and try again.");
     }
-    internal bool PrepareAutomaticUpdate(CancellationToken token) {
-        token.ThrowIfCancellationRequested();
-        string request = Path.Combine(Runtime, "update-request.json");
-        if (File.Exists(request)) return true;
-        Stage(100, "正在检查工作室更新…");
-        try {
-            using (Process helper = Spawn(BasePython, new[] {Path.Combine(Root, "studio_update.py"), "prepare-automatic"}, false)) {
-                activeSetupProcess = helper;
-                var timer = Stopwatch.StartNew();
-                try {
-                    while (!helper.WaitForExit(150)) {
-                        token.ThrowIfCancellationRequested();
-                        if (timer.Elapsed.TotalSeconds >= 12) {
-                            KillTree(helper);
-                            WriteLog("自动更新检查超时，继续打开工作室。");
-                            break;
-                        }
-                    }
-                    token.ThrowIfCancellationRequested();
-                } catch (OperationCanceledException) {
-                    KillTree(helper);
-                    File.Delete(request);
-                    throw;
-                } finally { activeSetupProcess = null; }
-            }
-        } catch (OperationCanceledException) { throw; }
-        catch (Exception error) { WriteLog("自动更新检查未完成：" + error.Message); }
-        return File.Exists(request);
-    }
     internal void HandoffUpdate(bool recover) {
         if (!File.Exists(BasePython)) throw new InvalidOperationException("请重新下载并解压完整安装包。");
         var info = ProcessInfo(BasePython, new[] {Path.Combine(Root, "studio_update.py"), recover ? "recover" : "run-request", "--root", Root, "--wait-pid", Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture)});
@@ -393,7 +364,7 @@ internal sealed class Engine {
                 while (timer.Elapsed.TotalMinutes < 3) {
                     token.ThrowIfCancellationRequested();
                     if (server.HasExited) throw new InvalidOperationException("界面启动失败，请查看 app.log 或点击「修复安装」。");
-                    try { if (client.GetAsync(AppUrl, token).GetAwaiter().GetResult().IsSuccessStatusCode) { Stage(100, "工作室已就绪，使用期间请保持启动器开启。"); return server; } }
+                    try { if (client.GetAsync(AppUrl, token).GetAwaiter().GetResult().IsSuccessStatusCode) { Stage(100, "工作室已就绪。"); return server; } }
                     catch (HttpRequestException) { } catch (TaskCanceledException) { token.ThrowIfCancellationRequested(); }
                     Thread.Sleep(350);
                 }
@@ -448,6 +419,7 @@ internal sealed class LauncherForm : Form {
     private readonly Button stop = new Button();
     private CancellationTokenSource cancel;
     private Process server;
+    private StudioWindow desktopWindow;
     private bool busy;
     private readonly System.Windows.Forms.Timer openTimer = new System.Windows.Forms.Timer();
     internal LauncherForm(string root, bool autoOpen, EventWaitHandle openSignal) {
@@ -464,7 +436,7 @@ internal sealed class LauncherForm : Form {
         repair.SetBounds(350, 329, 180, 44); repair.Text = "修复安装"; repair.FlatStyle = FlatStyle.Flat;
         stop.SetBounds(546, 329, 150, 44); stop.Text = "停止"; stop.FlatStyle = FlatStyle.Flat; stop.Enabled = false;
         showDetail.SetBounds(34, 389, 300, 25); showDetail.Text = "显示安装详情";
-        quickHelp.SetBounds(34, 428, 730, 100); quickHelp.Text = "浏览器打开后，输入文字或放入音频/视频，点击「一键生成」。\n高级选项通常无需修改。生成后可下载 MP3 或无损 FLAC。\n所有输出均为 AI 合成，并非真实录音。"; quickHelp.ForeColor = Color.FromArgb(103, 112, 109);
+        quickHelp.SetBounds(34, 428, 730, 100); quickHelp.Text = "工作室窗口打开后，输入文字或放入音频/视频，点击「一键生成」。\n高级选项通常无需修改。生成后可下载 MP3 或无损 FLAC。\n所有输出均为 AI 合成，并非真实录音。"; quickHelp.ForeColor = Color.FromArgb(103, 112, 109);
         detail.SetBounds(34, 425, 730, 104); detail.Multiline = true; detail.ScrollBars = ScrollBars.Vertical; detail.ReadOnly = true; detail.BackColor = Color.White; detail.Font = new Font("Consolas", 8); detail.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right; detail.Visible = false;
         showDetail.CheckedChanged += (sender, e) => { detail.Visible = showDetail.Checked; quickHelp.Visible = !showDetail.Checked; };
         var logs = new LinkLabel { Text = "打开安装日志", Location = new Point(34, 545), Size = new Size(190, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
@@ -477,17 +449,17 @@ internal sealed class LauncherForm : Form {
         RefreshButtons();
         primary.Click += async (sender, e) => { if (server != null && !server.HasExited) OpenApp(); else await BeginWork(!engine.IsReady()); };
         repair.Click += async (sender, e) => await BeginWork(true);
-        stop.Click += (sender, e) => { if (cancel != null) cancel.Cancel(); engine.CancelSetup(); Engine.KillTree(server); server = null; RefreshButtons(); };
+        stop.Click += (sender, e) => { if (cancel != null) cancel.Cancel(); engine.CancelSetup(); CloseApp(); Engine.KillTree(server); server = null; RefreshButtons(); };
         FormClosing += (sender, e) => {
             if (busy && MessageBox.Show("安装仍在进行，要停止并关闭吗？之后可以继续安装。", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) { e.Cancel = true; return; }
-            if (cancel != null) cancel.Cancel(); engine.CancelSetup(); Engine.KillTree(server);
+            if (cancel != null) cancel.Cancel(); engine.CancelSetup(); CloseApp(); Engine.KillTree(server);
         };
         openTimer.Interval = 350;
         openTimer.Tick += async (sender, e) => {
             if (!busy && File.Exists(Path.Combine(engine.Runtime, "update-request.json"))) {
                 openTimer.Stop();
                 try {
-                    Engine.KillTree(server); server = null;
+                    CloseApp(); Engine.KillTree(server); server = null;
                     engine.HandoffUpdate(false); Close();
                 } catch (Exception error) {
                     File.Delete(Path.Combine(engine.Runtime, "update-request.json"));
@@ -513,6 +485,7 @@ internal sealed class LauncherForm : Form {
         } catch (Exception error) { AppendLog("桌面快捷方式未创建：" + error.Message); if (notify) MessageBox.Show(error.Message, Text); }
     }
     private async Task OpenFromShortcut() {
+        if (desktopWindow != null) { desktopWindow.BringToUser(); return; }
         if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal;
         Show(); Activate();
         if (busy) return;
@@ -522,7 +495,7 @@ internal sealed class LauncherForm : Form {
     private void RefreshButtons() {
         if (busy) { primary.Enabled = false; repair.Enabled = false; stop.Enabled = true; return; }
         bool running = server != null && !server.HasExited;
-        primary.Enabled = true; primary.Text = running ? "在浏览器打开" : engine.IsReady() ? "打开工作室" : "安装并打开工作室";
+        primary.Enabled = true; primary.Text = running ? "打开工作室窗口" : engine.IsReady() ? "打开工作室" : "安装并打开工作室";
         repair.Enabled = !running; stop.Enabled = running;
         if (!running) status.Text = engine.IsReady() ? "已就绪，可以打开。" : "欢迎，首次使用请安装工作室。";
     }
@@ -537,13 +510,32 @@ internal sealed class LauncherForm : Form {
         if (detail.TextLength > 60000) detail.Text = detail.Text.Substring(detail.TextLength - 30000);
         detail.AppendText(text + Environment.NewLine);
     }
-    private void OpenApp() { if (!String.IsNullOrEmpty(engine.AppUrl)) Process.Start(new ProcessStartInfo(engine.AppUrl) { UseShellExecute = true }); }
+    private void CloseApp() {
+        StudioWindow window = desktopWindow;
+        desktopWindow = null;
+        if (window != null) window.Close();
+    }
+    private void OpenApp() {
+        if (String.IsNullOrEmpty(engine.AppUrl)) return;
+        if (desktopWindow != null) { desktopWindow.BringToUser(); return; }
+        var window = new StudioWindow(Text, Icon, engine.AppUrl,
+                                      Path.Combine(engine.Runtime, "webview2"), AppendLog);
+        desktopWindow = window;
+        window.FormClosed += (sender, e) => {
+            if (desktopWindow != window) return;
+            desktopWindow = null;
+            if (window.Ready) Close();
+            else { Show(); Activate(); }
+        };
+        window.Show();
+        Hide();
+    }
     private async Task BeginWork(bool setup) {
         busy = true; RefreshButtons(); cancel = new CancellationTokenSource(); string errorMessage = null;
         try {
             await Task.Run(() => {
                 if (setup) engine.Setup(cancel.Token);
-                if (!engine.PrepareAutomaticUpdate(cancel.Token))
+                if (!File.Exists(Path.Combine(engine.Runtime, "update-request.json")))
                     server = engine.StartServer(7860, cancel.Token);
             });
             if (server != null && !server.HasExited) OpenApp();

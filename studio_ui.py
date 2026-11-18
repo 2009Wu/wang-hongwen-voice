@@ -1,12 +1,14 @@
 """Shared desktop workflow; model imports remain in isolated worker processes."""
-import json,os,subprocess,uuid,time,shutil
+import json,os,re,subprocess,threading,uuid,time,shutil
+from html import escape
 from pathlib import Path
 import gradio as gr
 from settings import ROOT,SING_PYTHON,LANGUAGES,MAX_TEXT,MAX_MB
 from studio_paths import PRODUCT,STATE,EXPORTS,SHARED_CACHE,read_json
 from studio_library import (history_choices,get_record,retry_request,redo_request,
     voice_choices,save_voice,load_voice,delete_voice,open_exports)
-from runner import run_job
+from runner import GPU_LOCK, run_job
+from studio_update import check_on_open, stage_update, request_update
 from studio_presentation import ACCENT, I18N, LOCALE_CONTROL, portrait, tr
 
 MEDIA=['.mp3','.mp4','.wav','.m4a','.flac','.ogg','.webm','.mov','.aac','.mkv']
@@ -43,6 +45,18 @@ def upload_field(label, identifier, height):
         return gr.File(label=tr(label), show_label=False, container=False,
                        file_types=MEDIA, type='filepath', height=height,
                        elem_classes=['studio-file'])
+
+
+UPDATE_LOCK = threading.Lock()
+
+
+def release_notes(latest):
+    body = latest['notes'].replace('\r\n', '\n')
+    body = re.sub(r'!?\[([^]\n]*)\]\([^\n]*?\)', r'\1', body)
+    body = re.sub(r'^\s{0,3}#{1,6}\s+', '', body, flags=re.MULTILINE).strip()
+    return ('<div class="studio-release-notes">'
+            f'<strong>{escape(latest["title"])}</strong>'
+            f'<p>{escape(body)}</p></div>')
 
 
 def build_app(api):
@@ -117,22 +131,23 @@ def build_app(api):
                 redo=gr.Button(tr('只重做这个区间（最多 120 秒）'))
                 retry=gr.Button(tr('重试所选任务'));history_full=gr.Button(tr('用所选试听生成整首'))
             with gr.Tab(tr('更新与帮助'), id='studio-help'):
+                gr.Markdown(I18N('studio_version'), elem_id='studio-current-version')
+                with gr.Column(visible=False, elem_id='studio-new-release') as release:
+                    gr.Markdown(tr('新版更新内容'))
+                    notes = gr.HTML()
+                    install = gr.Button(tr('安装更新并重启'), variant='primary', visible=False)
+                update_info = gr.Markdown(tr('正在检查更新…'), elem_id='studio-update-status')
                 gr.Markdown(I18N('studio_about'))
-                from studio_update import automatic_updates_enabled, set_automatic_updates
-                automatic = gr.Checkbox(
-                    label=tr('启动时自动更新'), value=automatic_updates_enabled(),
-                    info=tr('打开工作室时检查并安装新版，然后进入网页。离线时会继续打开当前版本。'),
-                    visible=bool(os.getenv('VOICE_LAUNCHER_PID')),
-                )
-                update_info=gr.Textbox(label=tr('更新状态'),value=(read_json(ROOT/'.runtime/update-result.json') or {}).get('message',tr('可手动检查更新。')),interactive=False)
-                with gr.Row():
-                    check=gr.Button(tr('检查更新'));download=gr.Button(tr('下载并校验新版'))
-                    install=gr.Button(tr('安装已下载更新并重启'));rollback=gr.Button(tr('回退到上一个版本'))
-                staged=gr.State(None)
-                gr.Markdown(tr('更新前先停止生成。安装和回退会关闭并重新打开工作室，作品、收藏音色和模型不受影响。回退后，自动更新会等待更高版本。'))
                 diagnose=gr.Button(tr('导出诊断报告'));report=gr.File(label=tr('诊断报告（不含录音、输入文字和作品）'),interactive=False)
                 gr.Markdown(tr('显存不足：关闭其他显卡程序，选择“6 GB 节省显存”。下载失败：检查网络后重试，保留已有缓存。无法启动：在启动器点击“修复安装”。'))
-        gr.Markdown(tr('所有输出均为 AI 合成，不能作为本人真实录音。素材与生成均在本机处理。'), elem_id='studio-footnote')
+        with gr.Column(visible=False, elem_id='studio-update-toast') as update_toast:
+            gr.Markdown(tr('有新版本可用'), elem_classes=['studio-update-toast-title'])
+            toast_version = gr.Markdown()
+            toast_status = gr.Markdown(visible=False)
+            with gr.Row():
+                toast_install = gr.Button(tr('安装更新并重启'), variant='primary', min_width=144, visible=False)
+                toast_dismiss = gr.Button(tr('关闭提醒'), size='sm', scale=0, min_width=72)
+        gr.Markdown(tr('所有输出均为 AI 合成，不能作为本人真实录音。'), elem_id='studio-footnote')
         outputs=[audio,mp3,flac,wav,movie,details,used,transcript,status,history,current]
         inputs=[reference,selected_ref,text,song,performance,steps,vocals,music,video,language,ref_start,ref_seconds,ref_text,ref_lang,clip_start,clip_seconds]
         def make(values,is_preview):
@@ -206,29 +221,57 @@ def build_app(api):
                 try:delete_voice(identifier);return gr.update(choices=voice_choices(),value=None),None,'已移除收藏；原始素材和已有作品仍然保留。'
                 except Exception as error:raise gr.Error(str(error)) from error
             remove.click(remove_voice,[favorite],[favorite,selected_ref,ref_hint],api_name=False)
-        from studio_update import check_update,stage_update,request_update
-        def update_check():
+        latest_release = gr.State(None)
+        can_install = bool(os.getenv('VOICE_LAUNCHER_PID'))
+
+        def check_release():
+            result = check_on_open()
+            receipt = read_json(ROOT / '.runtime/update-result.json') or {}
+            if receipt.get('ok') is False:
+                status = receipt.get('message', tr('暂时无法检查更新。'))
+            elif result is None:
+                status = tr('暂时无法检查更新。')
+            elif not result['available']:
+                status = tr('当前已是最新版本。')
+            elif not can_install:
+                status = tr('请从桌面快捷方式打开以安装。')
+            else:
+                status = ''
+            ready = bool(result and result['available'])
+            button = gr.update(visible=ready and can_install)
+            return (result, gr.update(visible=ready), release_notes(result) if ready else '',
+                    status, gr.update(visible=ready), result['tag'] if ready else '', button, button)
+
+        def install_release(latest):
+            if not can_install or not latest or not latest.get('available'):
+                return
+            if not UPDATE_LOCK.acquire(blocking=False):
+                return
             try:
-                result=check_update();return ('可更新到 '+result['tag']) if result['available'] else '当前已是最新发布版本。'
-            except Exception as error:return '检查失败：'+str(error)[:250]
-        def update_download():
-            try:
-                path=stage_update();return path,'新版已下载并通过校验，点击安装后会重启。' if path else '当前已是最新发布版本。'
-            except Exception as error:return None,'下载失败：'+str(error)[:250]
-        def update_install(path):
-            try:return request_update(path)
-            except Exception as error:raise gr.Error(str(error)) from error
-        def update_rollback():
-            try:return request_update(rollback=True)
-            except Exception as error:raise gr.Error(str(error)) from error
-        def save_automatic_update(enabled):
-            set_automatic_updates(enabled)
-            return '已开启自动更新，下次打开工作室时生效。' if enabled else '已关闭自动更新。'
-        automatic.input(save_automatic_update, inputs=automatic, outputs=update_info, api_name=False, queue=False)
-        check.click(update_check,outputs=update_info,api_name=False)
-        download.click(update_download,outputs=[staged,update_info],api_name=False)
-        install.click(update_install,[staged],update_info,api_name=False,queue=False)
-        rollback.click(update_rollback,outputs=update_info,api_name=False,queue=False)
+                if (ROOT / '.runtime/update-request.json').exists():
+                    return
+                if GPU_LOCK.locked():
+                    raise ValueError('请先等待当前生成完成，再安装更新。')
+                progress = tr('正在下载并校验更新…')
+                yield gr.update(interactive=False), gr.update(interactive=False), progress, gr.update(value=progress, visible=True)
+                stage = stage_update(latest=latest)
+                request_update(stage)
+                status = tr('正在安装，工作室将自动重启…')
+                yield gr.update(interactive=False), gr.update(interactive=False), status, gr.update(value=status, visible=True)
+            except Exception as error:
+                message = str(error)[:250]
+                yield gr.update(interactive=True), gr.update(interactive=True), message, gr.update(value=message, visible=True)
+            finally:
+                UPDATE_LOCK.release()
+
+        demo.load(check_release, outputs=[latest_release, release, notes, update_info, update_toast,
+                                         toast_version, install, toast_install],
+                  queue=False, show_progress='hidden', api_name=False)
+        gr.on([install.click, toast_install.click], install_release, inputs=latest_release,
+              outputs=[install, toast_install, update_info, toast_status],
+              concurrency_limit=1, show_progress='hidden', api_name=False)
+        toast_dismiss.click(lambda: gr.update(visible=False), outputs=update_toast,
+                            queue=False, show_progress='hidden', api_name=False)
         from studio_diagnostics import export_report
         diagnose.click(export_report,outputs=report,api_name=False)
         # Original endpoints retain their exact positional inputs and outputs.

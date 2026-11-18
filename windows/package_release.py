@@ -13,6 +13,7 @@ import re
 import zipfile
 
 ROOT_FILES = {
+    'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'WebView2Loader.dll',
     'studio_ui.py','studio_presentation.py','studio_paths.py','studio_library.py','studio_song.py','studio_actions.py',
     'studio_update.py','studio_diagnostics.py','studio-version.json',
     '.dockerignore', '.gitattributes', '.gitignore', 'CHANGELOG.md',
@@ -26,6 +27,7 @@ DIRECTORIES = ('assets', 'docs', 'tests', 'vendor', 'windows')
 EXCLUDED = {'.git', '.runtime', '.cache', '__pycache__', '.pytest_cache',
             '.venv', 'venv', 'node_modules', 'jobs', 'results', 'checkpoints'}
 REQUIRED = ROOT_FILES | {
+    'windows/StudioWindow.cs', 'windows/webview2/LICENSE.txt', 'windows/webview2/NOTICE.txt',
     'docs/Windows-Setup.zh-CN.md', 'docs/Windows-Setup.md',
     'windows/runtime-pins.json', 'windows/VoiceStudioLauncher.cs', 'windows/restore_references.py', 'assets/packed-references.json',
     'windows/package_release.py', 'windows/compact_runtime.py', 'windows/DesktopIntegration.cs', 'assets/singing-reference.wav',

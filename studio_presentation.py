@@ -114,8 +114,8 @@ def translations():
         version = word('Current version', '当前版本', '目前版本')
         folder = word('Project folder', '作品目录', '作品資料夾')
         cache = word('Shared model cache', '共用模型缓存', '共用模型快取')
-        data['studio_about'] = (f'{version} · **{PRODUCT["version"]}**\n\n'
-                                f'{folder} · `{EXPORTS}`\n\n{cache} · `{SHARED_CACHE}`')
+        data['studio_version'] = f'### {version} · v{PRODUCT["version"]}'
+        data['studio_about'] = f'{folder} · {EXPORTS}\n\n{cache} · {SHARED_CACHE}'
         choose = word('Choose text or a song.', '文字与歌曲任选一种。', '文字與歌曲任選一種。')
         limit = word('Maximum text length', '文字上限', '文字上限')
         file_size = word('Maximum file size', '文件大小上限', '檔案大小上限')

@@ -100,35 +100,26 @@ class Workflows(unittest.TestCase):
         with zipfile.ZipFile(report) as result:
             self.assertEqual(set(result.namelist()),{'diagnostics.json','说明.txt'})
             self.assertNotIn('private prompt',result.read('diagnostics.json').decode())
-    def test_automatic_update_stages_once_and_respects_settings(self):
+    def test_open_checks_without_installing(self):
         latest = {'available': True, 'tag': 'v9.0.0'}
-        request = self.root / '.runtime/update-request.json'
         with patch.object(updater, 'ROOT', self.root), \
+             patch.object(updater, '_check_cache', None), \
              patch.object(updater, 'check_update', return_value=latest) as check, \
-             patch.object(updater, 'stage_update', return_value='verified-stage') as stage:
-            updater.set_automatic_updates(False)
-            updater.prepare_automatic_update()
-            check.assert_not_called()
-            updater.set_automatic_updates(True)
-            updater.prepare_automatic_update()
-            self.assertEqual(paths.read_json(request), {'kind': 'apply', 'stage': 'verified-stage'})
-            stage.assert_called_once_with(latest=latest, timeout=5)
-            request.unlink()
-            updater.prepare_automatic_update()
-            check.assert_called_once()
-            updater.set_automatic_updates(True)
-            paths.atomic_json(self.root / '.runtime/updates/automatic.json', {'skip_through': '9.0.0'})
-            updater.prepare_automatic_update()
-            self.assertFalse(request.exists())
-            self.assertEqual(stage.call_count, 1)
-
-    def test_automatic_update_download_failure_leaves_no_request(self):
-        with patch.object(updater, 'ROOT', self.root), \
-             patch.object(updater, 'check_update', side_effect=TimeoutError('offline')) as check:
-            updater.prepare_automatic_update()
-            updater.prepare_automatic_update()
+             patch.object(updater, 'stage_update') as stage:
+            self.assertEqual(updater.check_on_open(), latest)
+            self.assertEqual(updater.check_on_open(), latest)
+            check.assert_called_once_with(timeout=5)
+            stage.assert_not_called()
         self.assertFalse((self.root / '.runtime/update-request.json').exists())
-        check.assert_called_once()
+
+    def test_offline_check_leaves_app_usable(self):
+        with patch.object(updater, 'ROOT', self.root), \
+             patch.object(updater, '_check_cache', None), \
+             patch.object(updater, 'check_update', side_effect=TimeoutError('offline')) as check:
+            self.assertIsNone(updater.check_on_open())
+            self.assertIsNone(updater.check_on_open())
+            check.assert_called_once()
+        self.assertFalse((self.root / '.runtime/update-request.json').exists())
 
     def test_rollback_skips_the_reverted_release_for_automatic_updates(self):
         stage = self.staged()
