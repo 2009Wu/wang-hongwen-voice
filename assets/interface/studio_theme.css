@@ -22,7 +22,7 @@
 #studio-language { flex: 0 0 auto !important; width: max-content !important; min-width: 0 !important; overflow: visible; }
 #studio-language .html-container, .studio-portrait .html-container { padding: 0 !important; }
 #studio-locale-control { position: relative; width: max-content; }
-.studio-locale-toggle, #support-project {
+.studio-locale-toggle, #studio-feedback, #support-project {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -33,7 +33,7 @@
     font: inherit;
     font-weight: 650;
 }
-.studio-locale-toggle {
+.studio-locale-toggle, #studio-feedback {
     color: var(--studio-control-ink) !important;
     border: 1px solid var(--studio-control-line);
     background: var(--studio-control-base);
@@ -41,6 +41,7 @@
 }
 .studio-locale-name { color: var(--studio-control-ink) !important; }
 .studio-locale-toggle:hover, .studio-locale-toggle[aria-expanded="true"] { background: var(--studio-control-hover); }
+#studio-feedback:hover { background: var(--studio-control-hover); }
 .studio-locale-chevron { font-size: .72em; }
 #studio-locale-control [hidden] { display: none !important; }
 .studio-locale-search {

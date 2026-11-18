@@ -10,6 +10,10 @@ A graphite-blue workspace with preview controls next to the player. The language
 
 # v0.4.0 — 作品历史与歌曲试听
 
+## v0.5.1 — 工作室反馈
+
+- 在主界面提交功能建议、Bug 或配音与翻唱质量反馈。表单会带入当前版本。
+
 ## v0.4.1 · 启动时自动更新
 
 - 打开 Windows 工作室时，启动器自动检查并安装已发布的新版。通过 SHA-256 和文件清单校验后才会替换程序文件，完成后自动打开工作室。

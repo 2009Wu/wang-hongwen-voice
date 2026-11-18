@@ -64,6 +64,9 @@ def build_app(api):
             with gr.Column(scale=1, min_width=0, elem_classes=['studio-header-column']):
                 with gr.Row(elem_id='studio-header-actions', equal_height=False):
                     gr.HTML(LOCALE_CONTROL, elem_id='studio-language', scale=0, min_width=110)
+                    gr.Button(tr('提交反馈'),
+                              link=f'https://github.com/2009Wu/custom-voice-studio/issues/new?template=studio-feedback.yml&version={PRODUCT["version"]}',
+                              link_target='_blank', scale=0, min_width=90, elem_id='studio-feedback')
                     gr.Button(tr('给小王买杯咖啡'), link='https://ko-fi.com/little_wang',
                               link_target='_blank', scale=0, min_width=146, elem_id='support-project')
         with gr.Tabs(elem_id='studio-main-tabs'):

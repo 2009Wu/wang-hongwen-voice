@@ -10,6 +10,10 @@ Open-source AI singing conversion and text-to-speech using an archival Wang Hong
 
 Current release **v0.4.0** reduces installed disk use and losslessly packs the reference recordings. Photo icons, direct-open shortcuts, automatic 6/8/12 GB memory profiles and generation settings are unchanged.
 
+## Feedback
+
+Share feature ideas, bugs, or feedback about speech and singing quality. [Open the public feedback form](https://github.com/2009Wu/custom-voice-studio/issues/new?template=studio-feedback.yml) (GitHub sign-in required).
+
 ## Windows quickstart
 
 1. [Download the Windows ZIP](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip) and extract everything.

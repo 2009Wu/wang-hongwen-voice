@@ -96,7 +96,8 @@
     "Click to upload or drop files": "फ़ाइलों को अपलोड या ड्रॉप करने के लिए क्लिक करें",
     "Voice reference": "संदर्भ आवाज़",
     "Text or song": "पाठ या गीत",
-    "Audio result": "ऑडियो परिणाम"
+    "Audio result": "ऑडियो परिणाम",
+    "Send feedback": "प्रतिक्रिया दें"
   },
   "es": {
     "Create": "Crear",
@@ -195,7 +196,8 @@
     "Click to upload or drop files": "Haga clic para subir o soltar archivos",
     "Voice reference": "Voz de referencia",
     "Text or song": "Textos o canciones",
-    "Audio result": "Resultado de audio"
+    "Audio result": "Resultado de audio",
+    "Send feedback": "Enviar comentarios"
   },
   "ar": {
     "Create": "إنشاء",
@@ -294,7 +296,8 @@
     "Click to upload or drop files": "اضغط على تحميل الملفات أو إسقاطها",
     "Voice reference": "الصوت المرجعي",
     "Text or song": "النص أو الأغنية",
-    "Audio result": "النتيجة الصوتية"
+    "Audio result": "النتيجة الصوتية",
+    "Send feedback": "أرسل ملاحظاتك"
   },
   "fr": {
     "Create": "Créer",
@@ -393,7 +396,8 @@
     "Click to upload or drop files": "Cliquez pour télécharger ou déposer des fichiers",
     "Voice reference": "Voix de référence",
     "Text or song": "Le texte ou la chanson",
-    "Audio result": "Résultat audio"
+    "Audio result": "Résultat audio",
+    "Send feedback": "Envoyer un retour"
   },
   "bn": {
     "Create": "তৈরি করুন",
@@ -492,7 +496,8 @@
     "Click to upload or drop files": "ফাইল আপলোড বা ড্রপ করতে ক্লিক করুন",
     "Voice reference": "রেফারেন্স কণ্ঠ",
     "Text or song": "পাঠ্য বা গান",
-    "Audio result": "অডিও ফলাফল"
+    "Audio result": "অডিও ফলাফল",
+    "Send feedback": "মতামত দিন"
   },
   "pt": {
     "Create": "Criar",
@@ -591,7 +596,8 @@
     "Click to upload or drop files": "Clique para carregar ou soltar arquivos",
     "Voice reference": "Voz de referência",
     "Text or song": "Texto ou canção",
-    "Audio result": "Resultado de áudio"
+    "Audio result": "Resultado de áudio",
+    "Send feedback": "Enviar feedback"
   },
   "id": {
     "Create": "Buat",
@@ -690,7 +696,8 @@
     "Click to upload or drop files": "Klik untuk mengunggah atau menjatuhkan file",
     "Voice reference": "Suara referensi",
     "Text or song": "Teks atau lagu",
-    "Audio result": "Hasil audio"
+    "Audio result": "Hasil audio",
+    "Send feedback": "Kirim masukan"
   },
   "ur": {
     "Create": "بنائیں",
@@ -789,7 +796,8 @@
     "Click to upload or drop files": "فائلوں کو اپ لوڈ یا ڈراپ کرنے کے لئے کلک کریں",
     "Voice reference": "حوالے کی آواز",
     "Text or song": "متن یا گانا",
-    "Audio result": "آڈیو نتیجہ"
+    "Audio result": "آڈیو نتیجہ",
+    "Send feedback": "رائے بھیجیں"
   },
   "ru": {
     "Create": "Создание",
@@ -888,7 +896,8 @@
     "Click to upload or drop files": "Нажмите , чтобы загрузить или отбросить файлы",
     "Voice reference": "Образец голоса",
     "Text or song": "Текст или песня",
-    "Audio result": "Аудиорезультат"
+    "Audio result": "Аудиорезультат",
+    "Send feedback": "Оставить отзыв"
   },
   "de": {
     "Create": "Erstellen",
@@ -987,7 +996,8 @@
     "Click to upload or drop files": "Klicken Sie, um Dateien hochzuladen oder zu fallen",
     "Voice reference": "Referenzstimme",
     "Text or song": "Text oder Lied",
-    "Audio result": "Audio-Ergebnis"
+    "Audio result": "Audio-Ergebnis",
+    "Send feedback": "Feedback senden"
   },
   "ja": {
     "Create": "作成",
@@ -1086,7 +1096,8 @@
     "Click to upload or drop files": "ファイルをアップロードまたはドロップするにはクリックします",
     "Voice reference": "参照音声",
     "Text or song": "テキストや歌",
-    "Audio result": "音声結果"
+    "Audio result": "音声結果",
+    "Send feedback": "フィードバックを送る"
   },
   "arz": {
     "Create": "اعمل",
@@ -1185,7 +1196,8 @@
     "Click to upload or drop files": "انقر علشان تحميل او تسحب الملفات . - إضافة إضافة",
     "Voice reference": "الصوت المرجعي",
     "Text or song": "نص أو أغنية",
-    "Audio result": "نتيجة الصوت"
+    "Audio result": "نتيجة الصوت",
+    "Send feedback": "ابعت رأيك"
   },
   "mr": {
     "Create": "तयार करा",
@@ -1284,7 +1296,8 @@
     "Click to upload or drop files": "फाइल अपलोड करण्यासाठी किंवा ड्रॉप करण्यासाठी क्लिक करा",
     "Voice reference": "संदर्भ आवाज",
     "Text or song": "मजकूर किंवा गाणे",
-    "Audio result": "ऑडिओ परिणाम"
+    "Audio result": "ऑडिओ परिणाम",
+    "Send feedback": "अभिप्राय द्या"
   },
   "vi": {
     "Create": "Tạo",
@@ -1383,7 +1396,8 @@
     "Click to upload or drop files": "Nhấp vào để tải lên hoặc thả các tệp",
     "Voice reference": "Giọng tham chiếu",
     "Text or song": "Văn bản hoặc bài hát",
-    "Audio result": "Kết quả âm thanh"
+    "Audio result": "Kết quả âm thanh",
+    "Send feedback": "Gửi góp ý"
   },
   "te": {
     "Create": "సృష్టించండి",
@@ -1482,7 +1496,8 @@
     "Click to upload or drop files": "ఫైళ్ళను అప్లోడ్ చేయడానికి లేదా డ్రాప్ చేయడానికి క్లిక్ చేయండి",
     "Voice reference": "నమూనా స్వరం",
     "Text or song": "టెక్స్ట్ లేదా పాట",
-    "Audio result": "ఆడియో ఫలితం"
+    "Audio result": "ఆడియో ఫలితం",
+    "Send feedback": "అభిప్రాయం పంపండి"
   },
   "sw": {
     "Create": "Tengeneza",
@@ -1581,7 +1596,8 @@
     "Click to upload or drop files": "Bonyeza ili kupakia au kuacha faili",
     "Voice reference": "Sauti ya mfano",
     "Text or song": "Ujumbe au wimbo",
-    "Audio result": "Matokeo ya sauti"
+    "Audio result": "Matokeo ya sauti",
+    "Send feedback": "Tuma maoni"
   },
   "ha": {
     "Create": "Ƙirƙira",
@@ -1680,7 +1696,8 @@
     "Click to upload or drop files": "Danna don loda ko sauke fayiloli",
     "Voice reference": "Muryar samfur",
     "Text or song": "Rubutu ko waƙa",
-    "Audio result": "Sakamakon sauti"
+    "Audio result": "Sakamakon sauti",
+    "Send feedback": "Aika ra’ayi"
   },
   "pcm": {
     "Create": "Make",
@@ -1779,6 +1796,7 @@
     "Click to upload or drop files": "Click to upload or drop file",
     "Voice reference": "Voice sample",
     "Text or song": "Text or song",
-    "Audio result": "Audio result"
+    "Audio result": "Audio result",
+    "Send feedback": "Send feedback"
   }
 }

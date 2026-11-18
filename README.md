@@ -8,6 +8,10 @@
 
 **[下载 Windows 版](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** · [全部版本](https://github.com/2009Wu/wang-hongwen-voice/releases) · [Hugging Face 项目和试听](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)
 
+## 提交反馈
+
+欢迎分享功能建议、程序问题，以及配音或翻唱质量上的意见。[打开反馈表单](https://github.com/2009Wu/custom-voice-studio/issues/new?template=studio-feedback.yml)（需登录 GitHub，内容公开）。
+
 ## 作品、试听和更新
 
 Windows 版在启动时自动检查并安装更新。“更新与帮助”可以关闭自动更新、手动更新或回退。旧版用户需要先手动更新一次。
