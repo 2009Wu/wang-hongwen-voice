@@ -82,6 +82,7 @@ internal sealed class Engine {
     private readonly object logLock = new object();
     private readonly JavaScriptSerializer json = new JavaScriptSerializer();
     private int gpuIndex;
+    private string gpuIdentity;
     private volatile Process activeSetupProcess;
     private const string Revision = "windows-setup-1";
     internal Engine(string root, Action<int, string> progress, Action<string> logger) {
@@ -182,7 +183,7 @@ internal sealed class Engine {
         if (!Environment.Is64BitOperatingSystem || !Environment.Is64BitProcess) throw new InvalidOperationException("请使用 64 位 Windows 10 或 11。");
         if (!File.Exists(Path.Combine(Root, "app.py")) || !File.Exists(Path.Combine(Root, "windows", "runtime-pins.json")))
             throw new InvalidOperationException("请先完整解压 ZIP，保持启动器与 app.py、windows 文件夹在同一目录。");
-        var info = new ProcessStartInfo("nvidia-smi", "--query-gpu=index,name,memory.total,driver_version --format=csv,noheader,nounits") {
+        var info = new ProcessStartInfo("nvidia-smi", "--query-gpu=index,name,memory.total,driver_version,uuid,pci.bus_id --format=csv,noheader,nounits") {
             UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true
         };
         string output;
@@ -191,9 +192,11 @@ internal sealed class Engine {
             if (!p.WaitForExit(15000) || p.ExitCode != 0) throw new InvalidOperationException("显卡检查失败，请更新 NVIDIA 驱动后重启电脑。");
         }} catch (System.ComponentModel.Win32Exception) { throw new InvalidOperationException("需要 NVIDIA 显卡及可用驱动，最低为 6 GB 级显存。"); }
         int best = 0; string summary = "";
+        gpuIdentity = null;
         foreach (string line in output.Split(new[] {'\r','\n'}, StringSplitOptions.RemoveEmptyEntries)) {
             string[] parts = line.Split(','); int index, memory;
             if (parts.Length >= 4 && int.TryParse(parts[0].Trim(), out index) && int.TryParse(parts[2].Trim(), out memory) && memory > best) {
+                gpuIdentity = parts.Length >= 6 ? line.Trim() : null;
                 best = memory; gpuIndex = index; summary = parts[1].Trim() + " · " + (memory / 1024.0).ToString("0.0", CultureInfo.InvariantCulture) + " GB · driver " + parts[3].Trim();
             }
         }
@@ -318,7 +321,7 @@ internal sealed class Engine {
             Stage(78, "正在安装文字语音工具…"); Pip(Python("speech"), new[] {"-r", Path.Combine(Root, "requirements-tts.txt")}, token);
             Stage(90, "正在验证 GPU 和已安装组件…");
             string doctor = Path.Combine(Root, "windows", "check_install.py");
-            Run(BasePython, new[] {doctor, "gpu"}, token, 5);
+            ValidateGpu(token, force: true);
             Run(BasePython, new[] {doctor, "tools"}, token, 2);
             Run(Python("ui"), new[] {doctor, "ui"}, token, 5);
             Run(Python("singing"), new[] {doctor, "singing"}, token, 5);
@@ -343,15 +346,62 @@ internal sealed class Engine {
         info.RedirectStandardOutput = false; info.RedirectStandardError = false;
         Process.Start(info);
     }
+
+    private string GpuValidationKey() {
+        if (String.IsNullOrEmpty(gpuIdentity)) return null;
+        var state = new StringBuilder(Fingerprint()).Append('|').Append(gpuIdentity);
+        string torch = Path.Combine(Runtime, "python", "tools", "Lib", "site-packages", "torch");
+        foreach (string path in new[] {BasePython, Path.Combine(torch, "version.py"),
+                                      Path.Combine(torch, "lib", "torch_cuda.dll"),
+                                      Path.Combine(torch, "lib", "c10_cuda.dll")}) {
+            var file = new FileInfo(path);
+            if (!file.Exists) return null;
+            state.Append('|').Append(file.Length).Append('|').Append(file.LastWriteTimeUtc.Ticks);
+        }
+        using (var sha = SHA256.Create())
+            return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(state.ToString())));
+    }
+
+    private void ValidateGpu(CancellationToken token, bool force = false) {
+        token.ThrowIfCancellationRequested();
+        string marker = Path.Combine(Runtime, "startup-gpu-validation-v1.txt");
+        string key = null;
+        try {
+            key = GpuValidationKey();
+            if (!force && key != null && File.Exists(marker) &&
+                    String.Equals(File.ReadAllText(marker), key, StringComparison.Ordinal)) {
+                WriteLog("沿用已通过的 CUDA 验证。");
+                return;
+            }
+        } catch (IOException) { key = null; }
+        catch (UnauthorizedAccessException) { key = null; }
+        // This runs a real CUDA operation after setup, or if the GPU, driver or private runtime changes.
+        Run(BasePython, new[] {Path.Combine(Root, "windows", "check_install.py"), "gpu"}, token, 5);
+        if (key == null) return;
+        string temporary = marker + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try {
+            if (!String.Equals(GpuValidationKey(), key, StringComparison.Ordinal)) return;
+            File.WriteAllText(temporary, key, new UTF8Encoding(false));
+            if (File.Exists(marker)) File.Replace(temporary, marker, null);
+            else File.Move(temporary, marker);
+        } catch (IOException) {}
+        catch (UnauthorizedAccessException) {}
+        finally {
+            try { File.Delete(temporary); } catch (IOException) {} catch (UnauthorizedAccessException) {}
+        }
+    }
+
     internal Process StartServer(int startPort, CancellationToken token) {
-        Run(BasePython, new[] {Path.Combine(Root, "studio_paths.py"), "migrate-cache", Path.Combine(Root, ".cache")}, token, 10);
         if (!IsReady()) throw new InvalidOperationException("安装尚未完成，请先点击「安装并打开工作室」或「修复安装」。");
         Stage(100, "正在检查显卡…"); WriteLog(HardwareCheck(false));
-        Run(BasePython, new[] {Path.Combine(Root, "windows", "check_install.py"), "gpu"}, token, 5);
-        Run(BasePython, new[] {Path.Combine(Root, "windows", "restore_references.py"), "--root", Root, "--ffmpeg", Tool("ffmpeg")}, token, 2);
-        CompactRuntime(token, true);
         int port = FindPort(startPort);
-        var info = ProcessInfo(Python("ui"), new[] {Path.Combine(Root, "app.py")});
+        // Load Gradio while the launcher checks CUDA, references and old caches.
+        // The child only starts accepting jobs after it receives the readiness byte.
+        const string bootstrap = "import gradio, runpy, sys\n"
+            + "if sys.stdin.buffer.read(1) != b'1': sys.exit(1)\n"
+            + "runpy.run_path('app.py', run_name='__main__')";
+        var info = ProcessInfo(Python("ui"), new[] {"-c", bootstrap});
+        info.RedirectStandardInput = true;
         info.EnvironmentVariables["PORT"] = port.ToString(CultureInfo.InvariantCulture);
         Process server = new Process { StartInfo = info, EnableRaisingEvents = true };
         string appLog = Path.Combine(Runtime, "app.log");
@@ -359,6 +409,18 @@ internal sealed class Engine {
         server.OutputDataReceived += receive; server.ErrorDataReceived += receive;
         server.Start(); server.BeginOutputReadLine(); server.BeginErrorReadLine();
         AppUrl = "http://127.0.0.1:" + port;
+        try {
+            string legacyCache = Path.Combine(Root, ".cache");
+            if (Directory.Exists(legacyCache))
+                Run(BasePython, new[] {Path.Combine(Root, "studio_paths.py"), "migrate-cache", legacyCache}, token, 10);
+            ValidateGpu(token);
+            Run(BasePython, new[] {Path.Combine(Root, "windows", "restore_references.py"), "--root", Root, "--ffmpeg", Tool("ffmpeg")}, token, 2);
+            if (!File.Exists(Path.Combine(Runtime, "compact-runtime-v2.json")))
+                CompactRuntime(token, true);
+            token.ThrowIfCancellationRequested();
+            server.StandardInput.Write("1");
+            server.StandardInput.Close();
+        } catch { KillTree(server); server.Dispose(); throw; }
         Stage(100, "正在打开本地界面…");
         using (var client = new HttpClient(new HttpClientHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(2) }) {
             var timer = Stopwatch.StartNew();
@@ -368,7 +430,7 @@ internal sealed class Engine {
                     if (server.HasExited) throw new InvalidOperationException("界面启动失败，请查看 app.log 或点击「修复安装」。");
                     try { if (client.GetAsync(AppUrl, token).GetAwaiter().GetResult().IsSuccessStatusCode) { Stage(100, "工作室已就绪。"); return server; } }
                     catch (HttpRequestException) { } catch (TaskCanceledException) { token.ThrowIfCancellationRequested(); }
-                    Thread.Sleep(350);
+                    token.WaitHandle.WaitOne(90);
                 }
                 throw new TimeoutException("界面启动超时，请查看 app.log 或尝试修复安装。");
             } catch { KillTree(server); server.Dispose(); throw; }
@@ -518,6 +580,7 @@ internal sealed class LauncherForm : Form {
         if (IsDisposed || Disposing) return;
         if (InvokeRequired) { try { BeginInvoke(new Action<int, string>(UpdateProgress), value, text); } catch (InvalidOperationException) { } return; }
         progress.Value = Math.Max(0, Math.Min(100, value)); status.Text = text;
+        if (desktopWindow != null) desktopWindow.ShowStartupProgress(text);
     }
     private void AppendLog(string text) {
         if (IsDisposed || Disposing) return;
@@ -530,20 +593,28 @@ internal sealed class LauncherForm : Form {
         desktopWindow = null;
         if (window != null) window.Close();
     }
-    private void OpenApp() {
-        if (String.IsNullOrEmpty(engine.AppUrl)) return;
-        if (desktopWindow != null) { desktopWindow.BringToUser(); return; }
-        var window = new StudioWindow(Text, Icon, engine.AppUrl,
-                                      Path.Combine(engine.Runtime, "webview2"), AppendLog);
+    private StudioWindow ShowStudioWindow() {
+        if (desktopWindow != null) return desktopWindow;
+        var window = new StudioWindow(Text, Icon, Path.Combine(engine.Runtime, "webview2"), AppendLog);
         desktopWindow = window;
         window.FormClosed += (sender, e) => {
             if (desktopWindow != window) return;
             desktopWindow = null;
             if (window.Ready) Close();
-            else { Show(); Activate(); }
+            else {
+                if (busy && cancel != null) cancel.Cancel();
+                Show(); Activate();
+            }
         };
         window.Show();
         Hide();
+        return window;
+    }
+    private void OpenApp() {
+        if (String.IsNullOrEmpty(engine.AppUrl)) return;
+        var window = ShowStudioWindow();
+        window.NavigateTo(engine.AppUrl);
+        window.BringToUser();
     }
     private async Task BeginWork(bool setup) {
         busy = true; RefreshButtons(); cancel = new CancellationTokenSource(); string errorMessage = null;
@@ -552,13 +623,24 @@ internal sealed class LauncherForm : Form {
                 await Task.Run(() => engine.Setup(cancel.Token));
                 EnsureDesktopShortcut(false, warnOnFailure: true);
             }
+            ShowStudioWindow();
             await Task.Run(() => {
                 if (!File.Exists(Path.Combine(engine.Runtime, "update-request.json")))
                     server = engine.StartServer(7860, cancel.Token);
             });
+            cancel.Token.ThrowIfCancellationRequested();
             if (server != null && !server.HasExited) OpenApp();
         } catch (OperationCanceledException) { errorMessage = "已停止，之后可以重新开始安装。"; }
         catch (Exception error) { errorMessage = error.Message; AppendLog(error.ToString()); }
-        finally { busy = false; RefreshButtons(); if (errorMessage != null) { status.Text = errorMessage; showDetail.Checked = true; } }
+        finally {
+            busy = false;
+            if (server == null || server.HasExited || errorMessage != null) {
+                CloseApp();
+                if (server != null && !server.HasExited) { Engine.KillTree(server); server = null; }
+                if (!IsDisposed) Show();
+            }
+            RefreshButtons();
+            if (errorMessage != null) { status.Text = errorMessage; showDetail.Checked = true; }
+        }
     }
 }

@@ -129,4 +129,4 @@ if __name__ == '__main__':
 
 def public_output_paths():
     # Only files intentionally exposed by UI controls, never requests or history JSON.
-    return [str(EXPORTS),str(VOICES),str(STATE/'reference-previews'),str(STATE/'diagnostics')]
+    return [str(EXPORTS),str(VOICES),str(STATE/'reference-previews'),str(STATE/'diagnostics'),str(STATE/'mix-previews')]

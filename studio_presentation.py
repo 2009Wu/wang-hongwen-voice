@@ -86,7 +86,7 @@ def translations():
         keys[chinese] = key
         for locale, data in catalog.items():
             data[key] = {'zh-CN': chinese, 'zh-TW': traditional, 'en': english}[locale] \
-                if locale in ('zh-CN', 'zh-TW', 'en') else extra[locale][english]
+                if locale in ('zh-CN', 'zh-TW', 'en') else extra[locale].get(english, english)
 
     def label(english, chinese, traditional, locale):
         if locale == 'zh-CN':

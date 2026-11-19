@@ -1,6 +1,6 @@
 # Wang Hongwen Voice Studio · 王洪文语音工作室
 
-**Windows v0.5.6** · [Release notes](docs/releases/v0.5.6.md)
+**Windows v0.5.7** · [Release notes](docs/releases/v0.5.7.md)
 
 Open the studio from its desktop shortcut. The app checks for updates at startup and can install them in one click.
 
@@ -168,3 +168,10 @@ Both Windows studios use a shared model cache under LocalAppData / VoiceStudios 
 ## Optional usage statistics
 
 Usage statistics are off by default. Use `Analytics Preferences.cmd` in the installation folder to opt in or opt out. Reports count generation, first export clicks, and B-version adoption. They contain coarse settings and IDs of cataloged public songs. Audio and text remain on the device.
+
+
+## What’s new · v0.5.7
+
+- The desktop window opens while the local service and interface load.
+- Remix a completed cover using its saved vocals and backing track. Preview around 12 seconds, then save the full mix as a separate work.
+- Opt-in song statistics match cataloged recordings on the device, including MP3 or MP4 re-encodes of the same recording. Only the catalog ID is sent.

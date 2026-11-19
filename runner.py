@@ -86,7 +86,7 @@ def run_job(request):
         lines, log = queue.Queue(), deque(maxlen=60)
         options = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
         process = None
-        archived = False
+        archived = request.get('operation') == 'mix_preview'
         try:
             request = stash_request(request, job)
             request_path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
@@ -128,6 +128,21 @@ def run_job(request):
             for key in ["audio", "wav", "video", "details"] + (["flac"] if "flac" in result else []):
                 if result[key] and not Path(result[key]).is_relative_to(job / "results"):
                     raise RuntimeError("Unexpected output path")
+            if request.get('operation') == 'mix_preview':
+                from studio_paths import copy_owned
+                path = STATE / 'mix-previews' / job.name / 'mix-preview.wav'
+                path.parent.mkdir(parents=True, exist_ok=True)
+                copy_owned(result['audio'], path, link=True)
+                result['audio'] = str(path)
+                for old in path.parent.parent.glob('*/mix-preview.wav'):
+                    try:
+                        if time.time() - old.stat().st_mtime > 3600:
+                            old.unlink()
+                            old.parent.rmdir()
+                    except OSError:
+                        pass
+                yield 1, '混音试听已就绪。', result
+                return
             result = archive(request, result, job)
             archived = True
             yield 1, f"已自动保存 · {result['elapsed_seconds']:.0f} 秒 · AI 生成", result

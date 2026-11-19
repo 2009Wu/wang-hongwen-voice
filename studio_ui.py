@@ -11,6 +11,7 @@ from runner import GPU_LOCK, run_job
 from studio_update import check_on_open, stage_update, request_update
 from studio_presentation import ACCENT, I18N, INTERFACE, LOCALE_CONTROL, portrait, tr
 from studio_editor import editable_markup
+from studio_remix import mix_request
 
 MEDIA=['.mp3','.mp4','.wav','.m4a','.flac','.ogg','.webm','.mov','.aac','.mkv']
 
@@ -138,6 +139,15 @@ def build_app(api):
                                 redo_selection = gr.Button(tr('重做选中片段'), variant='primary')
                                 accept_b = gr.Button(tr('采用 B 版'), interactive=False)
                             comparison = gr.State(None)
+                        with gr.Accordion(tr('翻唱后混音'), open=False, elem_id='studio-remix'):
+                            with gr.Row():
+                                mix_vocals = gr.Slider(-12, 9, value=4.5, step=.5, label=tr('混音人声（dB）'))
+                                mix_music = gr.Slider(-15, 6, value=-1.5, step=.5, label=tr('混音伴奏（dB）'))
+                            mix_start = gr.Number(value=0, minimum=0, label=tr('试听起点（秒）'))
+                            with gr.Row():
+                                mix_preview = gr.Button(tr('试听混音'))
+                                mix_export = gr.Button(tr('保存新混音'), variant='primary')
+                            mix_audio = gr.Audio(label=tr('混音片段'), interactive=False, autoplay=True)
                         folder=gr.Button(tr('打开作品文件夹'))
                         current=gr.State(None)
             with gr.Tab(tr('作品历史'), id='studio-history'):
@@ -213,6 +223,34 @@ def build_app(api):
             except Exception as error:raise gr.Error(str(error)) from error
             yield from work(request,progress)
         events=[]
+        def preview_mix(identifier, vocals, backing, start):
+            try:
+                request = mix_request(identifier, vocals, backing, preview=True, start=start)
+                for _, _, result in run_job(request):
+                    if result:
+                        return result['audio']
+            except Exception as error:
+                raise gr.Error(str(error)) from error
+
+        def export_mix(identifier, vocals, backing, progress=gr.Progress()):
+            try:
+                request = mix_request(identifier, vocals, backing)
+            except Exception as error:
+                raise gr.Error(str(error)) from error
+            yield from work(request, progress)
+
+        events.append(mix_preview.click(preview_mix, [current, mix_vocals, mix_music, mix_start], mix_audio,
+                                        concurrency_id='gpu', api_name=False))
+        def preview_after_adjustment(identifier, vocals, backing, start):
+            if identifier:
+                return preview_mix(identifier, vocals, backing, start)
+
+        for slider in (mix_vocals, mix_music):
+            events.append(slider.release(preview_after_adjustment, [current, mix_vocals, mix_music, mix_start],
+                                         mix_audio, concurrency_id='gpu', trigger_mode='always_last', api_name=False))
+        events.append(mix_export.click(export_mix, [current, mix_vocals, mix_music], outputs,
+                                       concurrency_id='gpu', api_name=False))
+        current.change(lambda: None, outputs=mix_audio, queue=False, api_name=False)
         for button,fn,args,name in [(create,generate,inputs,'create'),(preview,audition,inputs,'preview'),
                 (approved,full,[current],False),(history_full,full,[history],False),
                 (redo,replace,[history,redo_start,redo_end],'redo'),(retry,repeat,[history],False)]:

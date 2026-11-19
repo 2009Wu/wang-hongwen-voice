@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+﻿// SPDX-License-Identifier: GPL-3.0-only
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -8,15 +8,16 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
 internal sealed class StudioWindow : Form {
-    private readonly Uri home;
+    private Uri home;
+    private readonly TaskCompletionSource<Uri> destination = new TaskCompletionSource<Uri>();
+    private bool initializationFailed;
     private readonly string profile;
     private readonly Action<string> log;
     private readonly WebView2 view = new WebView2 { Dock = DockStyle.Fill, Visible = false };
     private readonly Label message = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter };
     internal bool Ready { get; private set; }
 
-    internal StudioWindow(string name, Icon icon, string url, string profile, Action<string> log) {
-        home = new Uri(url);
+    internal StudioWindow(string name, Icon icon, string profile, Action<string> log) {
         this.profile = profile;
         this.log = log;
         Text = name;
@@ -32,12 +33,23 @@ internal sealed class StudioWindow : Form {
         message.Text = "正在打开工作室…";
         Controls.Add(view);
         Controls.Add(message);
+        FormClosed += (sender, args) => destination.TrySetResult(null);
         Shown += async (sender, args) => await Initialize();
     }
 
     internal void BringToUser() {
         if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal;
         Activate();
+    }
+
+
+    internal void NavigateTo(string url) {
+        ShowStartupProgress("正在载入工作室界面…");
+        destination.TrySetResult(new Uri(url));
+    }
+
+    internal void ShowStartupProgress(string text) {
+        if (!Ready && !initializationFailed) message.Text = text;
     }
 
     private async Task Initialize() {
@@ -47,6 +59,8 @@ internal sealed class StudioWindow : Form {
             await view.EnsureCoreWebView2Async(environment);
             if (IsDisposed) return;
 
+            home = await destination.Task;
+            if (IsDisposed || home == null) return;
             CoreWebView2 core = view.CoreWebView2;
             core.Settings.AreHostObjectsAllowed = false;
             core.Settings.IsWebMessageEnabled = false;
@@ -78,6 +92,7 @@ internal sealed class StudioWindow : Form {
             core.Navigate(home.AbsoluteUri);
         } catch (Exception error) {
             if (IsDisposed) return;
+            initializationFailed = true;
             message.Text = error is WebView2RuntimeNotFoundException
                 ? "这台电脑缺少 Microsoft WebView2 Runtime。\r\n安装 Windows WebView2 Runtime 后，重新打开工作室。"
                 : "工作室窗口启动失败。\r\n" + error.Message;

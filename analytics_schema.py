@@ -7,7 +7,7 @@ STEPS = {0, 20, 40, 60}
 VOCAL_MIX = {'unknown', 'soft', 'balanced', 'forward'}
 MUSIC_MIX = {'unknown', 'quiet', 'balanced', 'forward'}
 LENGTHS = {'unknown', 'under_30s', '30s_to_2m', '2m_to_5m', 'over_5m'}
-VARIANTS = {'base', 'redo'}
+VARIANTS = {'base', 'redo', 'remix'}
 FORMATS = {'none', 'mp3', 'flac', 'wav', 'mp4'}
 EVENT_FIELDS = {
     'event_id', 'studio', 'version', 'action', 'mode', 'variant', 'format',

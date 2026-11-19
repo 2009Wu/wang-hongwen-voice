@@ -24,7 +24,7 @@ def replace_interval(base,patch,start,end,fade_samples):
 
 def generate_song(request,job,emit,separate):
     job=Path(job);steps=int(request.get('steps',40));vocal_db=float(request.get('vocal_db',4.5));music_db=float(request.get('music_db',-1.5))
-    if steps not in [20,40,60] or not -2<=vocal_db<=9 or not -12<=music_db<=3:raise ValueError('生成参数无效。')
+    if steps not in [20,40,60] or not -12<=vocal_db<=9 or not -15<=music_db<=6:raise ValueError('生成参数无效。')
     redo=request.get('operation')=='redo';preview=bool(request.get('preview'));parent=None
     clip_start=float(request.get('clip_start',0)) if preview else 0
     clip_seconds=float(request.get('clip_seconds',15)) if preview else None

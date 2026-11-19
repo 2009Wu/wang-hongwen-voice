@@ -8,7 +8,7 @@
 
 **[下载 Windows 版](https://github.com/2009Wu/wang-hongwen-voice/releases/latest/download/Wang-Hongwen-Voice-Studio-Windows.zip)** · [全部版本](https://github.com/2009Wu/wang-hongwen-voice/releases) · [Hugging Face 项目和试听](https://huggingface.co/spaces/Little-Wang/wang-hongwen-voice)
 
-当前 Windows 版 **v0.5.6**。[版本说明](docs/releases/v0.5.6.md)
+当前 Windows 版 **v0.5.7**。[版本说明](docs/releases/v0.5.7.md)
 
 安装更新后，缺少的桌面快捷方式会自动补建。已有快捷方式会沿用，图标变更时会更新原图标。
 
@@ -110,3 +110,10 @@ Hugging Face 是免费项目介绍、试听和下载入口；生成在下载程�
 首次导出格式、A/B 采用情况和粗略生成参数。若另外开启公开歌曲统计，只发送
 已登记的公开歌曲编号。音频、文件名、输入文字、参考人声、账号和设备编号
 不会发送。后台数据保留 90 天。
+
+
+## 本次更新 · v0.5.7
+
+- 双击桌面图标后先显示工作室窗口，同时加载本地服务与界面。
+- 完整翻唱可用已保存的人声、伴奏重新混音。调完音量可试听约 12 秒，再将整首另存到作品历史。
+- 可选的公开歌曲统计在本机识别已登记录音。同一录音换成 MP3 或 MP4 仍可匹配，统计只发送曲目编号。

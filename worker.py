@@ -118,6 +118,16 @@ def main():
     args = parser.parse_args()
     request = json.loads(args.request.read_text(encoding="utf-8"))
     job = args.request.resolve().parent
+    if request.get('operation') in {'remix', 'mix_preview'}:
+        from studio_remix import render_mix
+        from studio_paths import atomic_json
+        started = time.monotonic()
+        emit(.15, '正在使用已保存的分轨混音…')
+        result = render_mix(request, job)
+        result['elapsed_seconds'] = round(time.monotonic() - started, 1)
+        atomic_json(job / 'result.json', result)
+        emit(1, '混音已完成。')
+        return
     prepare_environment()
     from performance import configure, memory_report
     request["_policy"] = configure(request)

@@ -3,6 +3,7 @@ import json
 import math
 import queue
 import sqlite3
+import subprocess
 import threading
 import time
 from contextlib import closing
@@ -61,13 +62,22 @@ def duration_group(value):
     return '2m_to_5m' if value < 300 else 'over_5m'
 
 
-def known_song(request):
+def known_song(request, workspace):
     hashes = read_json(DATA / 'analytics-song-matches.json')
     if hashes is None:
         hashes = read_json(ROOT / 'analytics-song-matches.json', {})
     checksum = request.get('input_sha256')
     song = hashes.get(checksum) if isinstance(hashes, dict) and isinstance(checksum, str) else None
-    return song if isinstance(song, str) and TOKEN.fullmatch(song) else None
+    if isinstance(song, str) and TOKEN.fullmatch(song):
+        return song
+    if not request.get('input'):
+        return None
+    try:
+        from song_match import match
+        audio = owned_path(workspace, request['input'], must_exist=True)
+        return match(audio, ROOT / 'assets' / 'song-catalog.json')
+    except (ValueError, OSError, RuntimeError, KeyError, ImportError, subprocess.SubprocessError):
+        return None
 
 
 def observation(action, identifier, output_format, config):
@@ -81,11 +91,14 @@ def observation(action, identifier, output_format, config):
         key = {'mp3': 'audio', 'flac': 'flac', 'wav': 'wav', 'mp4': 'video'}.get(output_format)
         if not result.get(key) or not owned_path(EXPORTS, result[key]).is_file():
             return None
-    request = read_json(WORKSPACES / identifier / 'request.json', {})
+    workspace = WORKSPACES / identifier
+    request = read_json(workspace / 'request.json', {})
     details_path = result.get('details')
     details = read_json(owned_path(EXPORTS, details_path), {}) if details_path else {}
     mode = record.get('mode')
     variant = 'redo' if request.get('operation') == 'redo' or details.get('redo_interval_seconds') else 'base'
+    if request.get('operation') == 'remix' or details.get('remixed'):
+        variant = 'remix'
     steps = details.get('steps', request.get('steps'))
     event = {
         'event_id': uuid4().hex,
@@ -95,7 +108,7 @@ def observation(action, identifier, output_format, config):
         'vocal_mix': mix_level(details.get('vocal_gain_db'), 'soft', 'forward'),
         'music_mix': mix_level(details.get('instrumental_gain_db'), 'quiet', 'forward'),
         'duration': duration_group(details.get('duration_seconds')),
-        'song': (known_song(request) or 'unmatched') if config.get('public_song_counts') is True
+        'song': (known_song(request, workspace) or 'unmatched') if config.get('public_song_counts') is True
                 and (action, mode, variant) == ('generated', 'sing', 'base') else None,
     }
     return event if validate_event(event) else None

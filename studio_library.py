@@ -35,6 +35,7 @@ def archive(request, result, job, failure=None):
     label=dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')+' · '+('配音' if request.get('mode')=='speak' else '翻唱')
     if request.get('preview'): label+='试听'
     if request.get('operation')=='redo': label+='局部重做'
+    if request.get('operation')=='remix': label+='重新混音'
     record={'id':identifier,'created':time.time(),'label':label,'mode':request.get('mode'),
             'preview':bool(request.get('preview')),'status':'failed' if failure else 'completed','parent':request.get('parent_id')}
     workspace=WORKSPACES/identifier; workspace.mkdir(parents=True,exist_ok=True)
@@ -95,7 +96,10 @@ def redo_request(identifier,start,end):
     if not (0<=start<end and end-start<=120): raise ValueError('重做区间必须大于 0 秒且不超过 120 秒。')
     request=read_json(folder/'request.json');request.update(operation='redo',parent_id=identifier,
         redo_start=start,redo_end=end,preview=False,seed=int(time.time_ns()%2147483647))
-    request.pop('approved_preview_id',None)
+    request.pop('approved_preview_id', None)
+    request.pop('input', None)
+    if 'reference_input' in request or get_record(identifier).get('parent'):
+        request.update(reference_input=str(folder / 'reference.wav'), reference_prepared=True, reference_start=0)
     return request
 
 def prune_workspaces(exclude=None):

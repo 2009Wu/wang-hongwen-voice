@@ -13,6 +13,7 @@ import re
 import zipfile
 
 ROOT_FILES = {
+    "studio_remix.py", "song_match.py",
     'analytics_schema.py',
     'studio_analytics.py',
     'configure_analytics.py',
