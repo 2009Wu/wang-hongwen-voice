@@ -1,4 +1,4 @@
-# Windows quickstart — v0.3.1
+# Windows quickstart
 
 [中文完整手册](Windows-Setup.zh-CN.md)
 
@@ -10,7 +10,9 @@ Requires 64-bit Windows 10/11, a 6 GB-class or larger NVIDIA GPU and driver, int
 
 Automatic profiles trade CPU work and model transfers for memory; they do not change default weights, precision, pitch or 40 steps. Close GPU applications and choose the 6 GB profile if out of memory. Re-run **修复安装** (Repair setup) for installation errors. **停止** means Stop; **打开安装日志** opens setup logs. App logs are in .runtime/app.log.
 
-Successful installation removes only .runtime/pip-cache and .runtime/downloads. Models remain in .cache. Preserve .runtime and .cache to keep using the installation. The studio checks for updates at startup. If an update is available, click Install update and restart. Repair setup refreshes environment paths after moving an existing folder.
+Successful installation clears `.runtime/pip-cache`. Verified Python and FFmpeg archives stay in `.runtime/downloads` for repairs (about 119 MiB together). The studio checks for updates at startup. If an update is available, click Install update and restart. Repair setup refreshes environment paths after moving an existing folder.
+
+If an older installer shows HTTP 404 while preparing FFmpeg, close it, extract the full v0.5.8 or newer ZIP over the existing program folder and select **修复安装** (Repair setup). Keep the runtime, model cache and results. Use **打开安装日志** (Open setup log) to find the failed dependency, URL and HTTP status. The installer runs as the current user. If school policy blocks the app or downloads, ask school IT to review the setup log.
 
 All audio is an AI interpretation, not an authentic recording. Software is GPL-3.0; archival recordings have separate rights notices.
 
