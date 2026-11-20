@@ -12,7 +12,7 @@ Automatic profiles trade CPU work and model transfers for memory; they do not ch
 
 Successful installation clears `.runtime/pip-cache`. Verified Python and FFmpeg archives stay in `.runtime/downloads` for repairs (about 119 MiB together). The studio checks for updates at startup. If an update is available, click Install update and restart. Repair setup refreshes environment paths after moving an existing folder.
 
-If an older installer shows HTTP 404 while preparing FFmpeg, close it, extract the full v0.5.8 or newer ZIP over the existing program folder and select **修复安装** (Repair setup). Keep the runtime, model cache and results. Use **打开安装日志** (Open setup log) to find the failed dependency, URL and HTTP status. The installer runs as the current user. If school policy blocks the app or downloads, ask school IT to review the setup log.
+If an older installer shows HTTP 404 while preparing FFmpeg, close it, extract the full v0.5.8 or newer ZIP over the existing program folder and select **修复安装** (Repair setup). Keep the runtime, model cache and results. Use **打开安装日志** (Open setup log) to find the failed dependency, URL and HTTP status. The installer runs as the current user.
 
 All audio is an AI interpretation, not an authentic recording. Software is GPL-3.0; archival recordings have separate rights notices.
 
